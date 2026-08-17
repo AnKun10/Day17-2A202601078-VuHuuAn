@@ -1,0 +1,611 @@
+<meta charset="utf-8">
+<title>Zep Multi-Memory Agent</title>
+<style>
+  :root {
+    --bg: #0D1320; --panel: #151D2E; --panel2: #1B2536; --edge: #26334D;
+    --ink: #E9EDF6; --muted: #93A0B8; --faint: #5C6A85;
+    --ivory: #E8DCC3;
+    --stm: #4E86EC; --lt: #28936B; --ep: #C5842F; --sem: #8B67EA; --mix: #C75D8A;
+    --fail: #E5484D;
+    --serif: Cambria, 'Times New Roman', serif;
+    --sans: system-ui, 'Segoe UI', sans-serif;
+    --mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); overflow: hidden; }
+  #viewport { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #stage { width: 1280px; height: 720px; position: relative; flex: none; }
+  .slide { position: absolute; inset: 0; padding: 56px 72px 74px; display: none; flex-direction: column; }
+  .slide.on { display: flex; }
+  @media (prefers-reduced-motion: no-preference) {
+    .slide.on { animation: rise .35s ease; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--ivory); margin-bottom: 14px; }
+  .eyebrow .n { color: var(--faint); }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1.12; text-wrap: balance; margin-bottom: 26px; }
+  h1 em { font-style: normal; color: var(--ivory); }
+  .body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  p, li { font-size: 16.5px; line-height: 1.55; color: var(--ink); }
+  .sub { color: var(--muted); }
+  small, .small { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  code, .mono { font-family: var(--mono); font-size: .92em; color: var(--ivory); }
+  .kbd { background: var(--panel2); border: 1px solid var(--edge); border-radius: 5px; padding: 1px 7px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  .tag { display: inline-block; font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; padding: 2px 9px; border-radius: 999px; color: #0D1320; font-weight: 700; }
+  .t-stm { background: var(--stm); } .t-lt { background: var(--lt); } .t-ep { background: var(--ep); } .t-sem { background: var(--sem); } .t-mix { background: var(--mix); }
+
+  .cols { display: grid; gap: 20px; flex: 1; min-height: 0; }
+  .c2 { grid-template-columns: 1fr 1fr; } .c2w { grid-template-columns: 1.2fr 1fr; } .c4 { grid-template-columns: repeat(4, 1fr); }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 18px 20px; }
+  .card.top { border-top: 3px solid var(--edge); }
+  .card h3 { font-size: 16px; font-weight: 650; margin-bottom: 8px; }
+  .card ul { padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+  .rowlist { display: flex; flex-direction: column; gap: 12px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--edge); }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--edge); vertical-align: top; line-height: 1.45; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+
+  .stat { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 16px 20px; }
+  .stat .v { font-family: var(--mono); font-size: 40px; font-variant-numeric: tabular-nums; color: var(--ivory); line-height: 1.1; }
+  .stat .l { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+  .ok { color: #4DBE93; font-family: var(--mono); } .bad { color: var(--fail); font-family: var(--mono); }
+  .note { border-left: 3px solid var(--ivory); background: var(--panel); border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 15px; color: var(--muted); }
+  .note b { color: var(--ink); }
+
+  figure { margin: 0; } figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { font-size: 13px; color: var(--faint); margin-top: 8px; }
+
+  footer { position: absolute; left: 72px; right: 72px; bottom: 26px; display: flex; align-items: center; gap: 16px; font-family: var(--mono); font-size: 12px; color: var(--faint); }
+  #ticks { display: flex; gap: 5px; flex: 1; }
+  #ticks i { width: 16px; height: 3px; background: var(--edge); border-radius: 2px; cursor: pointer; }
+  #ticks i.cur { background: var(--ivory); }
+  .navbtn { background: var(--panel); border: 1px solid var(--edge); color: var(--muted); border-radius: 7px; width: 34px; height: 28px; font-size: 14px; cursor: pointer; }
+  .navbtn:hover { color: var(--ink); border-color: var(--faint); }
+  .navbtn:focus-visible { outline: 2px solid var(--ivory); outline-offset: 2px; }
+
+  .bar-hover:hover rect.b { opacity: .82; }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+  .chip { border: 1px solid var(--edge); background: var(--panel); border-radius: 999px; padding: 6px 16px; font-family: var(--mono); font-size: 13px; color: var(--ink); }
+  .chip b { color: var(--ivory); }
+</style>
+
+<div id="viewport"><div id="stage">
+
+<!-- ============ 1 · TITLE ============ -->
+<section class="slide" style="justify-content:center">
+  <div class="eyebrow">VinUni Codelab · Lab 17 · Memory Systems for Agents</div>
+  <h1 style="font-size:64px; max-width:900px">Multi-Memory Agent<br>với <em>Zep</em></h1>
+  <p class="sub" style="font-size:20px; max-width:720px">Bốn tầng bộ nhớ &middot; định tuyến theo câu hỏi &middot; token budget 10/4/3/3 &middot; benchmark chấm bằng ground truth thay vì lời nói của LLM.</p>
+  <div class="chips">
+    <span class="chip">Practice <b>11/11</b></span>
+    <span class="chip">Golden <b>20/20</b> (+10)</span>
+    <span class="chip">Demo UI <b>Ant Design + GPT-5.6-Luna</b></span>
+  </div>
+  <p class="small" style="margin-top:40px">Vũ Hữu An · 2A202601078 &nbsp;·&nbsp; <span class="kbd">←</span> <span class="kbd">→</span> để chuyển slide</p>
+</section>
+
+<!-- ============ 2 · ARCHITECTURE ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">02</span> · Kiến trúc</div>
+  <h1>Một câu hỏi đi qua hệ thống như thế nào</h1>
+  <div class="body" style="justify-content:center">
+    <figure>
+      <svg viewBox="0 0 1140 380" role="img" aria-label="Pipeline: query đi qua router tới 4 tầng memory, qua bộ trim budget, thành merged context cho LLM và evaluator" style="color:#93A0B8">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+        <!-- query -->
+        <rect x="10" y="160" width="150" height="60" rx="9" fill="#151D2E" stroke="currentColor"/>
+        <text x="85" y="186" text-anchor="middle" fill="#E9EDF6" font-size="14" font-weight="600">Conversation</text>
+        <text x="85" y="205" text-anchor="middle" fill="#93A0B8" font-size="12">query của user</text>
+        <!-- router -->
+        <rect x="230" y="160" width="130" height="60" rx="9" fill="#151D2E" stroke="currentColor"/>
+        <text x="295" y="195" text-anchor="middle" fill="#E9EDF6" font-size="14" font-weight="600">Router</text>
+        <line x1="160" y1="190" x2="226" y2="190" stroke="currentColor" marker-end="url(#ar)"/>
+        <text x="193" y="180" text-anchor="middle" fill="currentColor" font-size="11">hỏi gì?</text>
+        <!-- 4 layers -->
+        <g font-size="13" font-weight="600">
+          <rect x="450" y="20"  width="240" height="64" rx="9" fill="#151D2E" stroke="#4E86EC"/>
+          <text x="570" y="46" text-anchor="middle" fill="#E9EDF6">Short-term · local</text>
+          <text x="570" y="66" text-anchor="middle" fill="#93A0B8" font-weight="400" font-size="11.5">sliding window + durable notes</text>
+          <rect x="450" y="108" width="240" height="64" rx="9" fill="#151D2E" stroke="#28936B"/>
+          <text x="570" y="134" text-anchor="middle" fill="#E9EDF6">Long-term · Zep user graph</text>
+          <text x="570" y="154" text-anchor="middle" fill="#93A0B8" font-weight="400" font-size="11.5">Context Block + edge facts</text>
+          <rect x="450" y="196" width="240" height="64" rx="9" fill="#151D2E" stroke="#C5842F"/>
+          <text x="570" y="222" text-anchor="middle" fill="#E9EDF6">Episodic · Zep episodes</text>
+          <text x="570" y="242" text-anchor="middle" fill="#93A0B8" font-weight="400" font-size="11.5">trajectory + reflection</text>
+          <rect x="450" y="284" width="240" height="64" rx="9" fill="#151D2E" stroke="#8B67EA"/>
+          <text x="570" y="310" text-anchor="middle" fill="#E9EDF6">Semantic · standalone graph</text>
+          <text x="570" y="330" text-anchor="middle" fill="#93A0B8" font-weight="400" font-size="11.5">domain KB dùng chung</text>
+        </g>
+        <g stroke="currentColor">
+          <line x1="360" y1="176" x2="446" y2="56"  marker-end="url(#ar)"/>
+          <line x1="360" y1="186" x2="446" y2="142" marker-end="url(#ar)"/>
+          <line x1="360" y1="196" x2="446" y2="226" marker-end="url(#ar)"/>
+          <line x1="360" y1="206" x2="446" y2="312" marker-end="url(#ar)"/>
+        </g>
+        <text x="400" y="150" text-anchor="middle" fill="currentColor" font-size="11">retrieve</text>
+        <!-- budget -->
+        <rect x="780" y="130" width="160" height="120" rx="9" fill="#151D2E" stroke="currentColor"/>
+        <text x="860" y="172" text-anchor="middle" fill="#E9EDF6" font-size="14" font-weight="600">Priority + Budget</text>
+        <text x="860" y="194" text-anchor="middle" fill="#E8DCC3" font-size="13" font-family="Consolas,monospace">10 / 4 / 3 / 3 %</text>
+        <text x="860" y="214" text-anchor="middle" fill="#93A0B8" font-size="11.5">trim giữ phần đầu</text>
+        <g stroke="currentColor">
+          <line x1="690" y1="56"  x2="776" y2="166" marker-end="url(#ar)"/>
+          <line x1="690" y1="142" x2="776" y2="180" marker-end="url(#ar)"/>
+          <line x1="690" y1="226" x2="776" y2="196" marker-end="url(#ar)"/>
+          <line x1="690" y1="312" x2="776" y2="212" marker-end="url(#ar)"/>
+        </g>
+        <!-- merged -->
+        <rect x="1000" y="130" width="130" height="120" rx="9" fill="#151D2E" stroke="#E8DCC3"/>
+        <text x="1065" y="175" text-anchor="middle" fill="#E9EDF6" font-size="14" font-weight="600">Merged</text>
+        <text x="1065" y="194" text-anchor="middle" fill="#E9EDF6" font-size="14" font-weight="600">context</text>
+        <text x="1065" y="216" text-anchor="middle" fill="#93A0B8" font-size="11.5">→ LLM · Evaluator</text>
+        <line x1="940" y1="190" x2="996" y2="190" stroke="currentColor" marker-end="url(#ar)"/>
+      </svg>
+      <figcaption>Evaluator chấm trên chính merged context — retrieval sai thì không LLM nào "nói hay" che được.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 3 · FOUR MEMORIES ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">03</span> · Bốn loại bộ nhớ</div>
+  <h1>Mỗi loại nhớ một thứ khác nhau</h1>
+  <div class="cols c4 body">
+    <div class="card top" style="border-top-color:var(--stm)">
+      <span class="tag t-stm">short_term</span>
+      <h3 style="margin-top:10px">Đang nói gì</h3>
+      <p class="small">Vùng nhớ nóng của hội thoại hiện tại — hiểu "nó" đang trỏ đến điều gì.</p>
+      <p class="small" style="margin-top:10px"><b class="mono">Ví dụ:</b> "dự án <span class="mono">ORCHID-27</span> vừa nhắc"</p>
+      <p class="small" style="margin-top:6px"><b class="mono">Lưu:</b> in-process, sliding window</p>
+    </div>
+    <div class="card top" style="border-top-color:var(--lt)">
+      <span class="tag t-lt">long_term</span>
+      <h3 style="margin-top:10px">Về người dùng</h3>
+      <p class="small">Fact, preference, open-loop bền vững qua nhiều thread &amp; session.</p>
+      <p class="small" style="margin-top:10px"><b class="mono">Ví dụ:</b> "Minh thích Python, deadline 16:00 thứ Sáu"</p>
+      <p class="small" style="margin-top:6px"><b class="mono">Lưu:</b> Zep user graph</p>
+    </div>
+    <div class="card top" style="border-top-color:var(--ep)">
+      <span class="tag t-ep">episodic</span>
+      <h3 style="margin-top:10px">Đã trải qua gì</h3>
+      <p class="small">Trajectory + kết quả + reflection — để không lặp lại sai lầm cũ.</p>
+      <p class="small" style="margin-top:10px"><b class="mono">Ví dụ:</b> "<span class="mono">ASYNC-FIX-20</span>: ClientSession + concurrency=20"</p>
+      <p class="small" style="margin-top:6px"><b class="mono">Lưu:</b> Zep episodes (user-scoped)</p>
+    </div>
+    <div class="card top" style="border-top-color:var(--sem)">
+      <span class="tag t-sem">semantic</span>
+      <h3 style="margin-top:10px">Tri thức chung</h3>
+      <p class="small">Domain knowledge không thuộc riêng user nào — policy, playbook.</p>
+      <p class="small" style="margin-top:10px"><b class="mono">Ví dụ:</b> "<span class="mono">PAYMENT-RULE-3</span>: Idempotency-Key, max 3 retries"</p>
+      <p class="small" style="margin-top:6px"><b class="mono">Lưu:</b> Zep standalone graph</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:18px"><b>Ranh giới quan trọng nhất:</b> long-term &amp; episodic scope theo <code>user_id</code> — semantic scope theo <code>graph_id</code>. Nhầm ranh giới = data leak (case E09/G08).</p>
+</section>
+
+<!-- ============ 4 · SHORT-TERM METHOD ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">04</span> · Method · <span style="color:var(--stm)">short-term</span></div>
+  <h1>Sliding window + compaction có chủ đích</h1>
+  <div class="cols c2w body">
+    <div class="rowlist">
+      <div class="card">
+        <h3>Cơ chế</h3>
+        <ul class="small" style="font-size:15px">
+          <li><code>detect_pressure()</code> — quá K turn hoặc quá ngưỡng token → nén.</li>
+          <li><code>extract_durable_notes()</code> — bắt marker (<span class="mono">[A-Z][A-Z0-9-]{5,}</span>) và từ khóa <em>TODO, deadline, constraint, decision…</em> giữ <b>nguyên văn</b>.</li>
+          <li>Turn cũ còn lại nén thành summary có chặn độ dài; giữ lại K turn gần nhất.</li>
+        </ul>
+      </div>
+      <div class="note"><b>Compaction không phải "tóm tắt văn hoa".</b> Thứ phải sống sót là state · decision · TODO · constraint — phần filler mới là thứ được phép quên.</div>
+    </div>
+    <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
+      <svg viewBox="0 0 420 250" role="img" aria-label="30 turn hội thoại đi qua compactor thành 3 khối: summary, durable notes giữ deadline, và K turn gần nhất" style="color:#93A0B8">
+        <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+        <rect x="8" y="95" width="120" height="58" rx="8" fill="#1B2536" stroke="currentColor"/>
+        <text x="68" y="120" text-anchor="middle" fill="#E9EDF6" font-size="13" font-weight="600">30 turns</text>
+        <text x="68" y="139" text-anchor="middle" fill="#93A0B8" font-size="11">1 constraint + filler</text>
+        <line x1="128" y1="124" x2="188" y2="124" stroke="currentColor" marker-end="url(#ar2)"/>
+        <text x="158" y="113" text-anchor="middle" fill="currentColor" font-size="10.5">compact</text>
+        <g font-size="12">
+          <rect x="192" y="14" width="220" height="56" rx="8" fill="#1B2536" stroke="currentColor"/>
+          <text x="302" y="38" text-anchor="middle" fill="#E9EDF6" font-weight="600">SESSION_SUMMARY</text>
+          <text x="302" y="56" text-anchor="middle" fill="#93A0B8" font-size="11">nén lossy, chặn 2500 ký tự</text>
+          <rect x="192" y="96" width="220" height="56" rx="8" fill="#1B2536" stroke="#4E86EC"/>
+          <text x="302" y="120" text-anchor="middle" fill="#E9EDF6" font-weight="600">DURABLE_NOTES</text>
+          <text x="302" y="138" text-anchor="middle" fill="#4E86EC" font-size="11" font-family="Consolas,monospace">REVIEW-DEADLINE-1600 ✓</text>
+          <rect x="192" y="178" width="220" height="56" rx="8" fill="#1B2536" stroke="currentColor"/>
+          <text x="302" y="202" text-anchor="middle" fill="#E9EDF6" font-weight="600">RECENT_TURNS</text>
+          <text x="302" y="220" text-anchor="middle" fill="#93A0B8" font-size="11">K = 6 (vẫn đúng khi K = 4)</text>
+        </g>
+      </svg>
+      <figcaption>Constraint sống trong durable notes kể cả khi raw turn của nó đã bị evict (case E10, G01).</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 5 · LONG-TERM METHOD ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">05</span> · Method · <span style="color:var(--lt)">long-term</span></div>
+  <h1>Context Block + edge facts có hạn dùng</h1>
+  <div class="cols c2 body">
+    <div class="rowlist">
+      <div class="card">
+        <h3>Cách retrieve</h3>
+        <ul class="small" style="font-size:15px">
+          <li>Tạo thread eval → <code>thread.get_user_context(thread_id)</code> → Zep tự lắp <b>Context Block</b> (user summary + fact liên quan).</li>
+          <li>Bonus: <code>graph.search(scope="edges", limit=30)</code> — mỗi fact kèm <code>valid_at / invalid_at</code>; limit thấp sẽ bỏ sót fact deadline/open-loop.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Hai tính chất được chấm</h3>
+        <ul class="small" style="font-size:15px">
+          <li><b>Recency + scope (E08):</b> BLUEBIRD-42 chuyển sang TypeScript/NestJS — fact Python cũ <em>không bị xoá</em>, chỉ gắn <code>invalid_at</code>, vẫn đúng cho scope ORCHID-27.</li>
+          <li><b>User isolation (E09):</b> Lan hỏi thì tuyệt đối không thấy <span class="mono">ORCHID-27</span> của Minh — <code>user_id</code> là ranh giới bảo mật, không phải tham số tùy chọn.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; gap:10px">
+      <h3>Fact tạm thời trong graph — ví dụ thật</h3>
+      <div style="background:var(--bg); border:1px solid var(--edge); border-radius:8px; padding:14px 16px; font-family:var(--mono); font-size:12.5px; line-height:1.75; color:var(--muted); overflow-x:auto">
+<span style="color:var(--lt)">FACT</span> Minh prefers Python for ORCHID-27<br>
+&nbsp;&nbsp;&nbsp;&nbsp; [valid_at=2026-08-01, invalid_at=<span style="color:var(--ivory)">None</span>]<br>
+<span style="color:var(--lt)">FACT</span> Backend uses Python<br>
+&nbsp;&nbsp;&nbsp;&nbsp; [valid_at=2026-08-01, <span style="color:var(--fail)">invalid_at=2026-08-05</span>]<br>
+<span style="color:var(--lt)">FACT</span> BLUEBIRD-42 backend must use TypeScript + NestJS<br>
+&nbsp;&nbsp;&nbsp;&nbsp; [valid_at=<span style="color:var(--ivory)">2026-08-05</span>, invalid_at=None]
+      </div>
+      <p class="small">Conflict rule: <b>recency thắng trong đúng scope</b>, fact cũ giữ làm provenance — lịch sử không bị viết lại.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 · EPISODIC METHOD ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">06</span> · Method · <span style="color:var(--ep)">episodic</span></div>
+  <h1>Tìm lại trajectory — và bài học xếp hạng</h1>
+  <div class="cols c2 body">
+    <div class="rowlist">
+      <div class="card">
+        <h3>Cách retrieve</h3>
+        <ul class="small" style="font-size:15px">
+          <li><code>graph.search(user_id, scope="episodes", limit=8)</code> + cap mỗi episode 400 ký tự để nhiều episode khác nhau cùng lọt budget.</li>
+          <li>Recall được cả hành trình: <em>tried</em> tăng timeout → fail · <em>worked</em> ClientSession + concurrency=20 · <em>reflection</em> connection churn, không phải timeout threshold.</li>
+        </ul>
+      </div>
+      <div class="note"><b>Bug thật ở golden G18:</b> query eval dài bị Zep lưu thành episode, rank cao hơn episode chứa fix thật và chiếm hết budget 240 token → thiếu <span class="mono">ClientSession</span>. Fix: <b>episode mang marker xếp lên đầu</b> trước khi trim → 20/20.</p></div>
+    </div>
+    <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
+      <svg viewBox="0 0 430 240" role="img" aria-label="So sánh thứ tự episode trước và sau khi rank theo marker: episode chứa ASYNC-FIX-20 nhảy lên đầu, lọt vào vùng budget" style="color:#93A0B8">
+        <text x="105" y="18" text-anchor="middle" fill="#93A0B8" font-size="12" font-family="Consolas,monospace">TRƯỚC (rank của Zep)</text>
+        <text x="325" y="18" text-anchor="middle" fill="#93A0B8" font-size="12" font-family="Consolas,monospace">SAU (marker-first)</text>
+        <g font-size="11.5" font-family="Consolas,monospace">
+          <rect x="15" y="30"  width="180" height="34" rx="6" fill="#1B2536" stroke="currentColor"/><text x="105" y="51" text-anchor="middle" fill="#93A0B8">query G09 (nhiễu)</text>
+          <rect x="15" y="72"  width="180" height="34" rx="6" fill="#1B2536" stroke="currentColor"/><text x="105" y="93" text-anchor="middle" fill="#93A0B8">query G05 (nhiễu)</text>
+          <rect x="15" y="114" width="180" height="34" rx="6" fill="#1B2536" stroke="currentColor"/><text x="105" y="135" text-anchor="middle" fill="#93A0B8">query G03 (nhiễu)</text>
+          <rect x="15" y="168" width="180" height="34" rx="6" fill="#1B2536" stroke="#C5842F"/><text x="105" y="189" text-anchor="middle" fill="#C5842F">ASYNC-FIX-20 ✦</text>
+          <rect x="235" y="30" width="180" height="34" rx="6" fill="#1B2536" stroke="#C5842F"/><text x="325" y="51" text-anchor="middle" fill="#C5842F">ASYNC-FIX-20 ✦</text>
+          <rect x="235" y="72" width="180" height="34" rx="6" fill="#1B2536" stroke="currentColor"/><text x="325" y="93" text-anchor="middle" fill="#93A0B8">query G09 (nhiễu)</text>
+          <rect x="235" y="114" width="180" height="34" rx="6" fill="#1B2536" stroke="currentColor"/><text x="325" y="135" text-anchor="middle" fill="#93A0B8">query G05 (nhiễu)</text>
+          <rect x="235" y="168" width="180" height="34" rx="6" fill="#1B2536" stroke="currentColor"/><text x="325" y="189" text-anchor="middle" fill="#5C6A85">query G03 (nhiễu)</text>
+        </g>
+        <line x1="8" y1="156" x2="202" y2="156" stroke="#E5484D" stroke-dasharray="5 4"/>
+        <text x="105" y="222" text-anchor="middle" fill="#E5484D" font-size="11">— budget 240 tok cắt ở đây → FAIL</text>
+        <line x1="228" y1="156" x2="422" y2="156" stroke="#4DBE93" stroke-dasharray="5 4"/>
+        <text x="325" y="222" text-anchor="middle" fill="#4DBE93" font-size="11">marker lọt vào budget → PASS</text>
+      </svg>
+      <figcaption>Cùng 8 kết quả search — chỉ đổi thứ tự trước khi trim đã đổi kết quả G18.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 7 · SEMANTIC METHOD ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">07</span> · Method · <span style="color:var(--sem)">semantic</span></div>
+  <h1>Standalone graph — và vì sao scope quyết định điểm</h1>
+  <div class="cols c2 body">
+    <div class="rowlist">
+      <div class="card">
+        <h3>Cách retrieve</h3>
+        <ul class="small" style="font-size:15px">
+          <li><code>graph.search(graph_id=…, scope="episodes", limit=8)</code> — search bằng <code>graph_id</code>, <b>không phải</b> <code>user_id</code>.</li>
+          <li>Fallback <code>scope="nodes"</code> khi episodes rỗng.</li>
+          <li>KB: payment retry, incident playbook, privacy rule, context budget — mỗi doc kết thúc bằng một mã marker.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Vì sao không dùng <code>scope="auto"</code></h3>
+        <table>
+          <tr><th>scope</th><th>trả về</th><th>marker literal</th></tr>
+          <tr><td class="mono">episodes</td><td>nguyên văn document</td><td class="mono" style="color:#4DBE93">PAYMENT-RULE-3 ✓</td></tr>
+          <tr><td class="mono">auto</td><td>fact đã trích xuất</td><td class="mono" style="color:var(--fail)">mã bị rơi ✗</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; gap:10px">
+      <h3>Một document trong KB — ví dụ thật</h3>
+      <div style="background:var(--bg); border:1px solid var(--edge); border-radius:8px; padding:14px 16px; font-family:var(--mono); font-size:12.5px; line-height:1.7; color:var(--muted); overflow-x:auto">
+{ "entity": <span style="color:var(--ivory)">"Payment API Retry Policy"</span>,<br>
+&nbsp;&nbsp;"summary": "POST /payments phải gửi cùng<br>
+&nbsp;&nbsp;&nbsp;<span style="color:var(--sem)">Idempotency-Key</span>; chỉ retry 429/5xx;<br>
+&nbsp;&nbsp;&nbsp;<span style="color:var(--sem)">exponential-backoff</span>; dừng sau <span style="color:var(--sem)">max-3-retries</span>.<br>
+&nbsp;&nbsp;&nbsp;Marker: <span style="color:var(--ivory)">PAYMENT-RULE-3</span>",<br>
+&nbsp;&nbsp;"source": "internal-api-guideline-v3" }
+      </div>
+      <p class="small">Tri thức này trả lời cho <b>mọi</b> user — Minh, Lan hay ai khác đều nhận cùng policy. Đó là ranh giới giữa "nhớ về bạn" và "biết về thế giới".</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8 · ROUTING ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">08</span> · Routing</div>
+  <h1>Câu hỏi nào đánh thức bộ nhớ nào</h1>
+  <div class="cols c2w body">
+    <div class="card" style="padding-top:10px">
+      <table>
+        <tr><th>Tín hiệu trong câu hỏi</th><th>Layer</th><th>Case</th></tr>
+        <tr><td>"vừa nhắc / trong thread này"</td><td><span class="tag t-stm">short_term</span></td><td class="mono small">E01·E10</td></tr>
+        <tr><td>"tôi thích gì / còn deadline nào" — về <b>tôi</b>, bền qua session</td><td><span class="tag t-lt">long_term</span></td><td class="mono small">E02·E03·E08·E09</td></tr>
+        <tr><td>"lần trước làm thế nào / root cause là gì"</td><td><span class="tag t-ep">episodic</span></td><td class="mono small">E04·E05</td></tr>
+        <tr><td>"quy tắc / policy / playbook chung"</td><td><span class="tag t-sem">semantic</span></td><td class="mono small">E06·E11</td></tr>
+        <tr><td>câu hỏi lai — "code theo policy chung nhưng hợp preference của tôi"</td><td><span class="tag t-mix">mixed</span></td><td class="mono small">E07·G20</td></tr>
+      </table>
+    </div>
+    <div class="rowlist">
+      <div class="card">
+        <h3>Với mixed: retrieve nhiều layer rồi assemble</h3>
+        <p class="small">Ưu tiên STM → LT → EP → SEM; mỗi layer bị trim về đúng hạn mức trên nền context 8 000 token:</p>
+        <figure style="margin-top:12px">
+          <svg viewBox="0 0 400 66" role="img" aria-label="Thanh phân bổ 8000 token: short-term 800, long-term 320, episodic 240, semantic 240, phần còn lại cho prompt">
+            <g>
+              <rect x="0"   y="8" width="76" height="26" rx="4" fill="#4E86EC"/>
+              <rect x="78"  y="8" width="30" height="26" rx="4" fill="#28936B"/>
+              <rect x="110" y="8" width="22" height="26" rx="4" fill="#C5842F"/>
+              <rect x="134" y="8" width="22" height="26" rx="4" fill="#8B67EA"/>
+              <rect x="158" y="8" width="242" height="26" rx="4" fill="#26334D"/>
+            </g>
+            <g font-size="10.5" font-family="Consolas,monospace" fill="#93A0B8">
+              <text x="38"  y="52" text-anchor="middle">800</text>
+              <text x="93"  y="52" text-anchor="middle">320</text>
+              <text x="121" y="52" text-anchor="middle">240</text>
+              <text x="145" y="52" text-anchor="middle">240</text>
+              <text x="279" y="52" text-anchor="middle">system · task · tool context…</text>
+            </g>
+          </svg>
+          <figcaption>10% · 4% · 3% · 3% — memory chiếm 1/5 context; retrieval tốt mà nhồi quá nhiều vẫn thành nhiễu.</figcaption>
+        </figure>
+      </div>
+      <div class="note"><b>Trim giữ phần đầu</b> vì cả graph search lẫn short-term render đều đặt nội dung xếp hạng cao nhất lên đầu — thứ tự trong text chính là thứ tự ưu tiên.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 · STRATEGY COMPARISON ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">09</span> · So sánh · quản lý context ngắn hạn</div>
+  <h1>Năm chiến lược, một câu hỏi: deadline có sống sót?</h1>
+  <div class="cols c2 body">
+    <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
+      <p class="small" style="margin-bottom:10px">Token của context sau 30 turn (K = 4) — cùng một stream chứa 1 constraint + filler</p>
+      <svg viewBox="0 0 430 205" role="img" aria-label="Biểu đồ cột token của 5 chiến lược tại K=4: buffer 437 đạt, window-only 58 mất deadline, summary 512 đạt, sliding 512 đạt, hybrid 273 đạt">
+        <g font-family="Consolas,monospace">
+          <line x1="36" y1="150" x2="424" y2="150" stroke="#26334D"/>
+          <!-- bars: max 512 -> 120px -->
+          <g class="bar-hover"><title>buffer · 437 tok · deadline ✓</title><rect class="b" x="46"  y="48"  width="48" height="102" rx="4" fill="#4E86EC"/><text x="70"  y="40"  text-anchor="middle" fill="#E9EDF6" font-size="12">437</text></g>
+          <g class="bar-hover"><title>window-only · 58 tok · deadline ✗</title><rect class="b" x="124" y="136" width="48" height="14" rx="4" fill="#4E86EC"/><text x="148" y="128" text-anchor="middle" fill="#E9EDF6" font-size="12">58</text></g>
+          <g class="bar-hover"><title>summary · 512 tok · deadline ✓</title><rect class="b" x="202" y="30"  width="48" height="120" rx="4" fill="#4E86EC"/><text x="226" y="22"  text-anchor="middle" fill="#E9EDF6" font-size="12">512</text></g>
+          <g class="bar-hover"><title>sliding · 512 tok · deadline ✓</title><rect class="b" x="280" y="30"  width="48" height="120" rx="4" fill="#4E86EC"/><text x="304" y="22"  text-anchor="middle" fill="#E9EDF6" font-size="12">512</text></g>
+          <g class="bar-hover"><title>hybrid · 273 tok · deadline ✓</title><rect class="b" x="358" y="86"  width="48" height="64" rx="4" fill="#4E86EC"/><text x="382" y="78"  text-anchor="middle" fill="#E9EDF6" font-size="12">273</text></g>
+          <g font-size="11" fill="#93A0B8">
+            <text x="70"  y="168" text-anchor="middle">buffer</text>
+            <text x="148" y="168" text-anchor="middle">window</text>
+            <text x="226" y="168" text-anchor="middle">summary</text>
+            <text x="304" y="168" text-anchor="middle">sliding</text>
+            <text x="382" y="168" text-anchor="middle">hybrid</text>
+          </g>
+          <g font-size="12">
+            <text x="70"  y="188" text-anchor="middle" fill="#4DBE93">✓</text>
+            <text x="148" y="188" text-anchor="middle" fill="#E5484D">✗ 0/3</text>
+            <text x="226" y="188" text-anchor="middle" fill="#4DBE93">✓</text>
+            <text x="304" y="188" text-anchor="middle" fill="#4DBE93">✓ default</text>
+            <text x="382" y="188" text-anchor="middle" fill="#4DBE93">✓ −47%</text>
+          </g>
+        </g>
+      </svg>
+      <figcaption>✓/✗ = cả 3 marker deadline còn trong context. Buffer tăng tuyến tính theo hội thoại — 437 chỉ vì stream mới 30 turn.</figcaption>
+    </figure>
+    <div class="rowlist">
+      <div class="card" style="padding-top:10px">
+        <table style="font-size:14px">
+          <tr><th>Chiến lược</th><th>Cơ chế</th><th>Điểm yếu</th></tr>
+          <tr><td class="mono">buffer</td><td>giữ tất cả</td><td>không scale — token tăng tuyến tính</td></tr>
+          <tr><td class="mono">window-only</td><td>chỉ K turn cuối</td><td style="color:var(--fail)">lặng lẽ quên constraint cũ</td></tr>
+          <tr><td class="mono">summary</td><td>nén turn cũ</td><td>lossy — sống nhờ summarizer trích đúng</td></tr>
+          <tr><td class="mono">sliding</td><td>summary + notes + K turn</td><td>summary vẫn có thể méo chi tiết</td></tr>
+          <tr><td class="mono">hybrid</td><td>pin constraint nguyên văn, chỉ nén filler</td><td>tốn chỗ pin cố định</td></tr>
+        </table>
+      </div>
+      <div class="note"><b>Kết luận:</b> thứ làm nên khác biệt không phải "nén giỏi" mà là <b>chọn đúng thứ không được nén</b>. Window-only rẻ nhất và sai nhất.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 · ZEP VS SELF-BUILD ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">10</span> · So sánh · backend bộ nhớ</div>
+  <h1>Managed Zep hay tự ghép Redis + Qdrant?</h1>
+  <div class="body">
+    <div class="card" style="padding-top:8px">
+      <table style="font-size:15px">
+        <tr><th style="width:22%"></th><th>Zep Cloud (managed)</th><th>Redis + Qdrant (tự build)</th></tr>
+        <tr><td class="sub">Extraction → graph</td><td>tự động: message → fact/entity/episode</td><td>tự viết extractor + schema + pipeline</td></tr>
+        <tr><td class="sub">Conflict / recency</td><td>temporal edge <code>valid_at/invalid_at</code> có sẵn</td><td>tự cài rule ghi đè + giữ provenance</td></tr>
+        <tr><td class="sub">Context lắp sẵn</td><td>Context Block một lệnh gọi</td><td>tự ghép KV profile + vector hits</td></tr>
+        <tr><td class="sub">Latency retrieve</td><td class="mono">~1.1–1.8s (long-term)</td><td class="mono">&lt;10ms KV · ~50ms vector</td></tr>
+        <tr><td class="sub">Ingestion</td><td>bất đồng bộ — phải poll trước khi search</td><td>đồng bộ, kiểm soát được</td></tr>
+        <tr><td class="sub">Rủi ro chính</td><td>ít kiểm soát schema, phụ thuộc API</td><td style="color:var(--fail)">tự sai isolation / deletion — bug bảo mật</td></tr>
+      </table>
+    </div>
+    <p class="note" style="margin-top:16px"><b>Trade-off thật sự:</b> Zep bán "độ đúng đắn của memory" (recency, isolation, provenance đã được giải); Redis+Qdrant bán tốc độ và quyền kiểm soát — nhưng mọi tính chất khó đều thành việc của bạn. Trong 170 phút lab, quyền kiểm soát là thứ ta chưa cần.</p>
+  </div>
+</section>
+
+<!-- ============ 11 · RESULTS ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">11</span> · Kết quả</div>
+  <h1>Ground truth nói gì</h1>
+  <div class="cols c4" style="flex:none">
+    <div class="stat"><div class="v">11/11</div><div class="l">practice E01–E11 · hit rate 100%</div></div>
+    <div class="stat"><div class="v">20/20</div><div class="l">golden set ẩn · +10 điểm</div></div>
+    <div class="stat"><div class="v">700.9<span style="font-size:20px">ms</span></div><div class="l">latency retrieve trung bình</div></div>
+    <div class="stat"><div class="v">1602</div><div class="l">token case nặng nhất (E08, long-term)</div></div>
+  </div>
+  <div class="cols c2 body" style="margin-top:18px">
+    <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
+      <p class="small" style="margin-bottom:10px">Evidence hit rate — có memory vs không có memory</p>
+      <svg viewBox="0 0 430 120" role="img" aria-label="Agent có memory đạt hit rate 100%, baseline không memory chỉ 18.2%">
+        <g font-family="Consolas,monospace" font-size="12">
+          <text x="8" y="30" fill="#E9EDF6" font-size="13" font-family="system-ui">Memory agent</text>
+          <rect x="150" y="16" width="240" height="22" rx="4" fill="#4E86EC"/>
+          <text x="398" y="31" fill="#E9EDF6">100%</text>
+          <text x="8" y="78" fill="#E9EDF6" font-size="13" font-family="system-ui">No-memory</text>
+          <rect x="150" y="64" width="44" height="22" rx="4" fill="#5C6A85"/>
+          <text x="202" y="79" fill="#93A0B8">18.2%</text>
+          <line x1="150" y1="8" x2="150" y2="96" stroke="#26334D"/>
+        </g>
+      </svg>
+      <figcaption>Baseline chỉ pass 2 case short-term — mọi thứ cần nhớ qua session đều mất.</figcaption>
+    </figure>
+    <div class="rowlist">
+      <div class="card">
+        <h3>Cái bẫy "token reduction"</h3>
+        <p class="small">No-memory giảm <b class="mono">81.8%</b> token — vì nó không retrieve gì cả. Memory agent chỉ giảm <b class="mono">20.9%</b> nhưng đúng 100%. <b>Reduction chỉ có nghĩa khi đi kèm hit rate.</b></p>
+      </div>
+      <div class="card">
+        <h3>Chi phí nằm ở đâu</h3>
+        <p class="small">Long-term đắt nhất: latency 1.1–1.8s và 1600 token/case (Context Block + 30 edge facts) — đổi lấy độ phủ fact. Episodic/semantic chỉ ~250–400ms, ~150 token.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12 · PRIVACY ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">12</span> · Privacy by design</div>
+  <h1>Bộ nhớ phải biết quên đúng cách</h1>
+  <div class="body" style="justify-content:center">
+    <figure>
+      <svg viewBox="0 0 1120 200" role="img" aria-label="Chuỗi 4 bước: consent gate trước khi ghi, redact PII, xoá user-scoped, verify trên mọi store" style="color:#93A0B8">
+        <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+        <g font-size="13.5">
+          <rect x="10" y="40" width="240" height="110" rx="10" fill="#151D2E" stroke="currentColor"/>
+          <text x="130" y="72" text-anchor="middle" fill="#E9EDF6" font-weight="600">1 · Consent gate</text>
+          <text x="130" y="97" text-anchor="middle" fill="#93A0B8" font-size="12.5">không opt-in →</text>
+          <text x="130" y="115" text-anchor="middle" fill="#93A0B8" font-size="12.5">ingestion từ chối ghi</text>
+          <rect x="300" y="40" width="240" height="110" rx="10" fill="#151D2E" stroke="currentColor"/>
+          <text x="420" y="72" text-anchor="middle" fill="#E9EDF6" font-weight="600">2 · Minimization</text>
+          <text x="420" y="97" text-anchor="middle" fill="#93A0B8" font-size="12.5">email / phone redact</text>
+          <text x="420" y="115" text-anchor="middle" fill="#93A0B8" font-size="12.5">trước khi vào graph</text>
+          <rect x="590" y="40" width="240" height="110" rx="10" fill="#151D2E" stroke="currentColor"/>
+          <text x="710" y="72" text-anchor="middle" fill="#E9EDF6" font-weight="600">3 · Forget</text>
+          <text x="710" y="97" text-anchor="middle" fill="#93A0B8" font-size="12.5">xoá Zep user + Redis keys</text>
+          <text x="710" y="115" text-anchor="middle" fill="#93A0B8" font-size="12.5">shared KB giữ nguyên</text>
+          <rect x="880" y="40" width="230" height="110" rx="10" fill="#151D2E" stroke="#E8DCC3"/>
+          <text x="995" y="72" text-anchor="middle" fill="#E9EDF6" font-weight="600">4 · Verify</text>
+          <text x="995" y="97" text-anchor="middle" fill="#4DBE93" font-size="12.5" font-family="Consolas,monospace">Zep user absent: True</text>
+          <text x="995" y="115" text-anchor="middle" fill="#4DBE93" font-size="12.5" font-family="Consolas,monospace">Redis keys: 0</text>
+        </g>
+        <g stroke="currentColor">
+          <line x1="250" y1="95" x2="296" y2="95" marker-end="url(#ar3)"/>
+          <line x1="540" y1="95" x2="586" y2="95" marker-end="url(#ar3)"/>
+          <line x1="830" y1="95" x2="876" y2="95" marker-end="url(#ar3)"/>
+        </g>
+      </svg>
+      <figcaption>Right to be Forgotten = xoá <b>và chứng minh đã xoá</b> trên mọi store — KB marker của lab gọi đây là <span class="mono">DELETE-VERIFY-ALL</span>.</figcaption>
+    </figure>
+    <p class="note" style="margin-top:22px"><b>Chống memory poisoning cùng nguyên tắc đó:</b> heartbeat chỉ được de-dup / đánh dấu stale / recap — không bao giờ tự thêm instruction hay cấp quyền mới cho chính nó; mọi durable record giữ provenance để audit và rollback.</p>
+  </div>
+</section>
+
+<!-- ============ 13 · CLOSING ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">13</span> · Kết luận &amp; demo</div>
+  <h1>Năm điều mang về</h1>
+  <div class="cols c2 body">
+    <div class="card">
+      <ol style="padding-left:20px; display:flex; flex-direction:column; gap:13px; font-size:16px">
+        <li><b>Chấm retrieval, đừng chấm câu trả lời</b> — LLM nói hay che được memory hỏng.</li>
+        <li><b>Compaction là chọn thứ không được quên</b>, không phải nén cho ngắn.</li>
+        <li><b>Recency thắng trong đúng scope</b>, fact cũ sống tiếp làm provenance.</li>
+        <li><b><code>user_id</code> là ranh giới bảo mật</b> — isolation phải được test, không được giả định.</li>
+        <li><b>Budget là một phần của thiết kế</b> — thứ tự ưu tiên quyết định thứ gì sống sót khi trim.</li>
+      </ol>
+    </div>
+    <div class="rowlist">
+      <div class="card">
+        <h3>Demo trực tiếp</h3>
+        <p class="small" style="margin-bottom:8px">Mini-product Ant Design — <code>localhost:8501</code></p>
+        <ul class="small" style="padding-left:18px; display:flex; flex-direction:column; gap:6px">
+          <li>chọn 1 trong 31 case (practice + golden)</li>
+          <li>xem evidence từng layer + PASS/FAIL theo marker</li>
+          <li>budget meter 10/4/3/3 theo thời gian thực</li>
+          <li>chat tiếp đúng user/thread — GPT-5.6-Luna grounded vào memory</li>
+        </ul>
+      </div>
+      <div class="note">Repo: <span class="mono">github.com/AnKun10/Day17-2A202601078-VuHuuAn</span><br><b>Cảm ơn thầy cô và các bạn đã lắng nghe.</b></div>
+    </div>
+  </div>
+</section>
+
+</div></div>
+
+<footer>
+  <span id="pgnum">1 / 13</span>
+  <span id="ticks"></span>
+  <button class="navbtn" id="prev" aria-label="Slide trước">←</button>
+  <button class="navbtn" id="next" aria-label="Slide sau">→</button>
+</footer>
+
+<script>
+(function () {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const ticks = document.getElementById('ticks');
+  const pgnum = document.getElementById('pgnum');
+  slides.forEach((_, i) => {
+    const t = document.createElement('i');
+    t.addEventListener('click', () => go(i));
+    ticks.appendChild(t);
+  });
+  let cur = Math.min(slides.length - 1, Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+  function go(i) {
+    cur = (i + slides.length) % slides.length;
+    slides.forEach((s, j) => s.classList.toggle('on', j === cur));
+    Array.from(ticks.children).forEach((t, j) => t.classList.toggle('cur', j === cur));
+    pgnum.textContent = (cur + 1) + ' / ' + slides.length;
+    history.replaceState(null, '', '#' + (cur + 1));
+  }
+  document.getElementById('prev').addEventListener('click', () => go(cur - 1));
+  document.getElementById('next').addEventListener('click', () => go(cur + 1));
+  addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+  });
+  const stage = document.getElementById('stage');
+  function fit() {
+    const s = Math.min(innerWidth / 1280, innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  addEventListener('resize', fit);
+  fit();
+  go(cur);
+})();
+</script>

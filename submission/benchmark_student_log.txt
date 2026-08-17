@@ -7,43 +7,43 @@ At line:1 char:302
  
  Container vinuni-lab17-zep-memory-qdrant-1  Running
 E01 short_term: Ten du an ca nhan toi vua nhac la gi?
-  PASS  0.2 ms
+  PASS  0.1 ms
 E06 semantic: Quy tac retry POST payment la gi?
-  PASS  1265.6 ms
+  PASS  492.5 ms
 E09 long_term: Lan uu tien stack backend nao cho LOTUS-88?
-  PASS  11161.0 ms
+  PASS  1675.8 ms
 E10 short_term: Deadline review cu la khi nao?
-  PASS  1.1 ms
+  PASS  0.5 ms
 E02 long_term: Voi demo ca nhan cua Minh, ngon ngu uu tien la gi?
-  PASS  2965.5 ms
+  PASS  1887.9 ms
 E03 long_term: Minh con open loop hay deadline nao chua hoan thanh?
-  PASS  2719.6 ms
+  PASS  1929.2 ms
 E04 episodic: Lan truoc Minh fix async HTTP timeout bang cach nao?
-  PASS  290.4 ms
+  PASS  260.4 ms
 E05 episodic: Reflection cua su co async la gi, tang timeout co phai root fix 
 khong?
-  PASS  1055.8 ms
+  PASS  272.2 ms
 E07 mixed: Hay chon huong dan code retry payment phu hop voi preference ca nhan 
 cua Minh.
-  PASS  2786.5 ms
+  PASS  1852.6 ms
 E11 semantic: Theo incident playbook, truoc khi tang timeout can kiem tra gi?
-  PASS  406.4 ms
+  PASS  252.8 ms
 E08 long_term: Backend cua BLUEBIRD-42 bat buoc dung stack gi?
-  PASS  2614.8 ms
+  PASS  1631.2 ms
             Benchmark summary            
 ┏━━━━━━┳━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━┓
 ┃ Case ┃ Layer      ┃ Pass ┃ Latency ms ┃
 ┡━━━━━━╇━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━┩
-│ E01  │ short_term │ yes  │        0.2 │
-│ E06  │ semantic   │ yes  │     1265.6 │
-│ E09  │ long_term  │ yes  │    11161.0 │
-│ E10  │ short_term │ yes  │        1.1 │
-│ E02  │ long_term  │ yes  │     2965.5 │
-│ E03  │ long_term  │ yes  │     2719.6 │
-│ E04  │ episodic   │ yes  │      290.4 │
-│ E05  │ episodic   │ yes  │     1055.8 │
-│ E07  │ mixed      │ yes  │     2786.5 │
-│ E11  │ semantic   │ yes  │      406.4 │
-│ E08  │ long_term  │ yes  │     2614.8 │
+│ E01  │ short_term │ yes  │        0.1 │
+│ E06  │ semantic   │ yes  │      492.5 │
+│ E09  │ long_term  │ yes  │     1675.8 │
+│ E10  │ short_term │ yes  │        0.5 │
+│ E02  │ long_term  │ yes  │     1887.9 │
+│ E03  │ long_term  │ yes  │     1929.2 │
+│ E04  │ episodic   │ yes  │      260.4 │
+│ E05  │ episodic   │ yes  │      272.2 │
+│ E07  │ mixed      │ yes  │     1852.6 │
+│ E11  │ semantic   │ yes  │      252.8 │
+│ E08  │ long_term  │ yes  │     1631.2 │
 └──────┴────────────┴──────┴────────────┘
 Reports: /workspace/reports/benchmark.json | /workspace/reports/benchmark.md

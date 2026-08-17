@@ -5,22 +5,22 @@
 - Cases: **11**
 - Passed: **11/11**
 - Evidence hit rate: **100.0%**
-- Average retrieval latency: **2297.0 ms**
-- Average token reduction vs full source context: **14.2%**
+- Average retrieval latency: **932.3 ms**
+- Average token reduction vs full source context: **18.7%**
 
 | Case | Layer | Pass | Latency ms | Retrieved tokens | Token reduction | Missing / Error |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| E01 | short_term | PASS | 0.2 | 133 | 0.0% |  |
-| E06 | semantic | PASS | 1265.6 | 148 | 67.8% |  |
-| E09 | long_term | PASS | 11161.0 | 705 | 0.0% |  |
-| E10 | short_term | PASS | 1.1 | 195 | 0.0% |  |
-| E02 | long_term | PASS | 2965.5 | 1789 | 0.0% |  |
-| E03 | long_term | PASS | 2719.6 | 1783 | 0.0% |  |
-| E04 | episodic | PASS | 290.4 | 609 | 0.0% |  |
-| E05 | episodic | PASS | 1055.8 | 593 | 0.0% |  |
-| E07 | mixed | PASS | 2786.5 | 485 | 14.2% |  |
-| E11 | semantic | PASS | 406.4 | 146 | 74.2% |  |
-| E08 | long_term | PASS | 2614.8 | 1765 | 0.0% |  |
+| E01 | short_term | PASS | 0.1 | 133 | 0.0% |  |
+| E06 | semantic | PASS | 492.5 | 60 | 86.9% |  |
+| E09 | long_term | PASS | 1675.8 | 802 | 0.0% |  |
+| E10 | short_term | PASS | 0.5 | 195 | 0.0% |  |
+| E02 | long_term | PASS | 1887.9 | 1819 | 0.0% |  |
+| E03 | long_term | PASS | 1929.2 | 1736 | 0.0% |  |
+| E04 | episodic | PASS | 260.4 | 372 | 0.0% |  |
+| E05 | episodic | PASS | 272.2 | 356 | 0.0% |  |
+| E07 | mixed | PASS | 1852.6 | 396 | 29.9% |  |
+| E11 | semantic | PASS | 252.8 | 60 | 89.4% |  |
+| E08 | long_term | PASS | 1631.2 | 1771 | 0.0% |  |
 
 ## Evidence excerpts
 
@@ -30,11 +30,11 @@
 
 ### E06 - semantic
 
-`EPISODE: {"id":"kb-payment-retry","entity":"Payment API Retry Policy","summary":"For POST /payments, every retryable request MUST send the same Idempotency-Key. Retry only HTTP 429 or transient 5xx errors, use exponential-backoff, and stop after max-3-retries. Marker: PAYMENT-RULE-3.","source":"internal-api-guideline-v3","updated_at":"2026-08-10T00:00:00Z"} metadata= EPISODE: For POST /payments, every retryable request MUST send the same Idempotency-Key. Retry only HTTP 429 or transient 5xx errors, use exponential-backoff, and stop after max-3-retries. Marker: PAYMENT-RULE-3. metadata=`
+`EPISODE: Payment API Retry Policy: For POST /payments, every retryable request MUST send the same Idempotency-Key. Retry only HTTP 429 or transient 5xx errors, use exponential-backoff, and stop after max-3-retries. Marker: PAYMENT-RULE-3.`
 
 ### E09 - long_term
 
-`<USER_SUMMARY> The user's project is LOTUS-88. They prioritize Java and Spring Boot, and do not use Python for backend examples. </USER_SUMMARY>  <EPISODES> Episodes are source message or document excerpts shown in selection order.   - Created At: 2026-08-01 11:00:20     Source: message     Content: Lab Assistant (assistant): Da hieu: LOTUS-88, Java + Spring Boot cho backend examples.   - Created At: 2026-08-01 11:00:00     Source: message     Content: [user] {   "user_id": "lan-lab17",   "first_name": "Lan",   "last_name": "Tran",   "user_alias": "Lan Tran" }: Toi la Lan. Du an cua toi la LOTUS-88. Toi uu tien Java va Spring Boot, va khong dung Python trong vi du backend. </EPISODES>  <FACT`
+`MARKERS: LOTUS-88 NOTE: Toi la Lan. Du an cua toi la LOTUS-88. Toi uu tien Java va Spring Boot, va khong dung Python trong vi du backend. NOTE: Da hieu: LOTUS-88, Java + Spring Boot cho backend examples. FACT: LOTUS-88 uses Java for backend examples. [valid_at=2026-08-01T11:00:20Z, invalid_at=None] FACT: LOTUS-88 uses Spring Boot for backend examples. [valid_at=2026-08-01T11:00:20Z, invalid_at=None] FACT: Lan Tran's project is LOTUS-88. [valid_at=2026-08-01T11:00:00Z, invalid_at=2026-08-01T11:00:20Z] FACT: Lan Tran does not use Python in the backend example. [valid_at=2026-08-01T11:00:00Z, invalid_at=2026-08-01T11:00:20Z] FACT: Lan Tran prioritizes Java. [valid_at=2026-08-01T11:00:00Z, inval`
 
 ### E10 - short_term
 
@@ -42,28 +42,28 @@
 
 ### E02 - long_term
 
-`<USER_SUMMARY> The user is studying async/await, coroutines, and Tasks. Their personal project is ORCHID-27, for which they prefer Python. For work, the company project BLUEBIRD-42 requires backend development in TypeScript with NestJS, explicitly not Python. The user is debugging async HTTP requests and attempting to increase the timeout to 60 seconds. They need to complete a benchmark report, LAB-REPORT-1600, by Friday at 16:00. The lab assistant also asked to check the connection pool, client lifecycle, and concurrency. A recent incident, ASYNC-FIX-20, was resolved by reusing an aiohttp ClientSession and setting concurrency to 20, indicating the main issue was connection churn, not the ti`
+`MARKERS: ORCHID-27, BLUEBIRD-42, LAB-REPORT-1600, ASYNC-FIX-20 NOTE: Cap nhat moi: voi du an cong ty BLUEBIRD-42, backend bat buoc dung TypeScript voi NestJS; khong dung Python cho backend du an nay. Preference Python van dung cho demo ca nhan ORCHI NOTE: Ten du an ca nhan cua toi la ORCHID-27. Toi thich Python va khong thich Java. Khi giai thich code, hay dung vi du ngan. NOTE: Da hieu: demo ca nhan ORCHID-27, uu tien Python, tranh Java, vi du ngan. FACT: Minh Nguyen does not like Java. [valid_at=2026-08-01T09:00:00Z, invalid_at=2026-08-01T09:00:20Z] FACT: Minh Nguyen likes Python. [valid_at=2026-08-01T09:00:00Z, invalid_at=None] FACT: Minh Nguyen still prefers Python for personal demos for`
 
 ### E03 - long_term
 
-`<USER_SUMMARY> The user is studying async/await, coroutines, and Tasks. Their personal project is ORCHID-27, for which they prefer Python. For work, the company project BLUEBIRD-42 requires backend development in TypeScript with NestJS, explicitly not Python. The user is debugging async HTTP requests and attempting to increase the timeout to 60 seconds. They need to complete a benchmark report, LAB-REPORT-1600, by Friday at 16:00. The lab assistant also asked to check the connection pool, client lifecycle, and concurrency. A recent incident, ASYNC-FIX-20, was resolved by reusing an aiohttp ClientSession and setting concurrency to 20, indicating the main issue was connection churn, not the ti`
+`MARKERS: ORCHID-27, BLUEBIRD-42, LAB-REPORT-1600, ASYNC-FIX-20 NOTE: TODO: hoan thanh benchmark report truoc thu Sau luc 16:00. Day la open loop LAB-REPORT-1600. FACT: Minh Nguyen increased the timeout to 60s. [valid_at=2026-08-03T10:00:00Z, invalid_at=2026-08-03T10:03:00Z] FACT: Minh Nguyen often confuses coroutine with Task. [valid_at=2026-08-01T09:02:00Z, invalid_at=None] FACT: Minh Nguyen has a todo to complete the benchmark report before Friday at 16:00. [valid_at=2026-08-01T09:04:00Z, invalid_at=None] FACT: Minh Nguyen is debugging async HTTP. [valid_at=2026-08-03T10:00:00Z, invalid_at=None] FACT: Minh Nguyen is learning async/await. [valid_at=2026-08-01T09:02:00Z, invalid_at=None] FAC`
 
 ### E04 - episodic
 
-`EPISODE: Cach hieu qua la reuse aiohttp ClientSession va dat concurrency=20. Reflection: loi chinh la connection churn, khong phai timeout threshold. Ma su co ASYNC-FIX-20. EPISODE: Tuan nay minh phai them chuc nang retry payment vao dung cai backend cua du an ben cong ty chu khong phai project ca nhan, nen minh can lam theo dung chuan cong nghe ma cong ty bat buoc. Ban giup minh xac dinh: rieng cho backend cua du an cong ty cua minh thi minh phai viet bang stack nao, ngon ngu va framework cu the ra sao, va ap dung policy thanh toan chung the nao cho phan danh dau request kho EPISODE: Toi dang hoc async/await va hay nham coroutine voi Task. Neu sau nay gap chu de nay, hay giai thich bang tim`
+`EPISODE: Cach hieu qua la reuse aiohttp ClientSession va dat concurrency=20. Reflection: loi chinh la connection churn, khong phai timeout threshold. Ma su co ASYNC-FIX-20. EPISODE: Hom nay toi debug async HTTP. Toi da thu tang timeout len 60s nhung van fail. EPISODE: Cuoi tuan minh ngoi mot minh lam demo rieng, khong hop team. Truoc khi chon template, nhac lai: khi lam viec ca nhan minh uu tien ngon ngu nao, va ma du an demo ca nhan la gi? Chi preference cua Minh, dung tron so thich dong nghiep. EPISODE: Toi nay minh viet tool ca nhan de tai hien su co HTTP roi sua dung playbook. Can ba manh: ngon ngu minh thich khi lam mot minh, ma su co async lan truoc, va buoc playbook truoc khi tang tim`
 
 ### E05 - episodic
 
-`EPISODE: Cach hieu qua la reuse aiohttp ClientSession va dat concurrency=20. Reflection: loi chinh la connection churn, khong phai timeout threshold. Ma su co ASYNC-FIX-20. EPISODE: Tuan nay minh phai them chuc nang retry payment vao dung cai backend cua du an ben cong ty chu khong phai project ca nhan, nen minh can lam theo dung chuan cong nghe ma cong ty bat buoc. Ban giup minh xac dinh: rieng cho backend cua du an cong ty cua minh thi minh phai viet bang stack nao, ngon ngu va framework cu the ra sao, va ap dung policy thanh toan chung the nao cho phan danh dau request kho EPISODE: Voi demo ca nhan cua Minh, ngon ngu uu tien la gi? EPISODE: Hom nay toi debug async HTTP. Toi da thu tang ti`
+`EPISODE: Cach hieu qua la reuse aiohttp ClientSession va dat concurrency=20. Reflection: loi chinh la connection churn, khong phai timeout threshold. Ma su co ASYNC-FIX-20. EPISODE: Ten du an ca nhan cua toi la ORCHID-27. Toi thich Python va khong thich Java. Khi giai thich code, hay dung vi du ngan. EPISODE: Hom nay toi debug async HTTP. Toi da thu tang timeout len 60s nhung van fail. EPISODE: Cuoi tuan minh ngoi mot minh lam demo rieng, khong hop team. Truoc khi chon template, nhac lai: khi lam viec ca nhan minh uu tien ngon ngu nao, va ma du an demo ca nhan la gi? Chi preference cua Minh, dung tron so thich dong nghiep. EPISODE: Minh sap viet script ca nhan de tai hien su co latency, muon`
 
 ### E07 - mixed
 
-`<LONG_TERM> <USER_SUMMARY> The user is studying async/await, coroutines, and Tasks. Their personal project is ORCHID-27, for which they prefer Python. For work, the company project BLUEBIRD-42 requires backend development in TypeScript with NestJS, explicitly not Python. The user is debugging async HTTP requests and attempting to increase the timeout to 60 seconds. They need to complete a benchmark report, LAB-REPORT-1600, by Friday at 16:00. The lab assistant also asked to check the connection pool, client lifecycle, and concurrency. A recent incident, ASYNC-FIX-20, was resolved by reusing an aiohttp ClientSession and setting concurrency to 20, indicating the main issue was connection churn`
+`<LONG_TERM> MARKERS: ORCHID-27, BLUEBIRD-42, LAB-REPORT-1600, ASYNC-FIX-20 NOTE: Ten du an ca nhan cua toi la ORCHID-27. Toi thich Python va khong thich Java. Khi giai thich code, hay dung vi du ngan. FACT: Minh Nguyen likes Python. [valid_at=2026-08-01T09:00:00Z, invalid_at=None] FACT: Minh Nguyen still prefers Python for personal demos for project ORCHID-27. [valid_at=2026-08-05T08:00:00Z, invalid_at=None] FACT: Minh Nguyen does not like Java. [valid_at=2026-08-01T09:00:00Z, invalid_at=2026-08-01T09:00:20Z] FACT: Minh Nguyen is learning async/await. [valid_at=2026-08-01T09:02:00Z, invalid_at=None] FACT: Minh Nguyen is debugging async HTTP. [valid_at=2026-08-03T10:00:00Z, invalid_at=None] F`
 
 ### E11 - semantic
 
-`EPISODE: {"id":"kb-async-http","entity":"Async HTTP Incident Playbook","summary":"When async HTTP calls time out, inspect connection pooling, downstream saturation and concurrency before increasing timeout. Reuse a long-lived client session where possible. Marker: CONN-POOL-FIRST.","source":"incident-playbook-2026","updated_at":"2026-08-11T00:00:00Z"} metadata= EPISODE: When async HTTP calls time out, inspect connection pooling, downstream saturation and concurrency before increasing timeout. Reuse a long-lived client session where possible. Marker: CONN-POOL-FIRST. metadata=`
+`EPISODE: Async HTTP Incident Playbook: When async HTTP calls time out, inspect connection pooling, downstream saturation and concurrency before increasing timeout. Reuse a long-lived client session where possible. Marker: CONN-POOL-FIRST.`
 
 ### E08 - long_term
 
-`<USER_SUMMARY> The user is studying async/await, coroutines, and Tasks. Their personal project is ORCHID-27, for which they prefer Python. For work, the company project BLUEBIRD-42 requires backend development in TypeScript with NestJS, explicitly not Python. The user is debugging async HTTP requests and attempting to increase the timeout to 60 seconds. They need to complete a benchmark report, LAB-REPORT-1600, by Friday at 16:00. The lab assistant also asked to check the connection pool, client lifecycle, and concurrency. A recent incident, ASYNC-FIX-20, was resolved by reusing an aiohttp ClientSession and setting concurrency to 20, indicating the main issue was connection churn, not the ti`
+`MARKERS: ORCHID-27, BLUEBIRD-42, LAB-REPORT-1600, ASYNC-FIX-20 NOTE: Cap nhat moi: voi du an cong ty BLUEBIRD-42, backend bat buoc dung TypeScript voi NestJS; khong dung Python cho backend du an nay. Preference Python van dung cho demo ca nhan ORCHI FACT: The project BLUEBIRD-42 requires TypeScript for the backend. [valid_at=2026-08-05T08:00:00Z, invalid_at=None] FACT: The project BLUEBIRD-42 requires NestJS for the backend. [valid_at=2026-08-05T08:00:00Z, invalid_at=2026-08-05T08:00:20Z] FACT: Python is prohibited for the backend of the project BLUEBIRD-42. [valid_at=2026-08-05T08:00:00Z, invalid_at=2026-08-05T08:00:20Z] FACT: Da tach scope BLUEBIRD-42 uses TypeScript/NestJS. [valid_at=2026`

@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+import json
 import re
 from types import SimpleNamespace
 from typing import Any
 
 from .config import settings
 from .context_budget import ContextBudgetManager
-from .utils import cap_query, join_nonempty
+from .utils import cap_query, join_nonempty, normalize
 from .zep_common import prime_eval_thread, render_graph_search, safe_call
+
+# Durable lab markers look like ORCHID-27 / LAB-REPORT-1600: uppercase code,
+# at least one hyphen, at least one digit. Requiring the hyphen+digit rejects
+# plain uppercase words (BLUEBIRD, TODO, HTTP) that show up inside long noisy
+# eval prompts stored as episodes.
+MARKER_RE = re.compile(r"\b[A-Z][A-Z0-9]*-[A-Z0-9-]*\d\b")
 
 
 class StudentMemory:
@@ -25,7 +32,6 @@ class StudentMemory:
         # LAB TODO 1/4 - long-term retrieval via the Zep Context Block.
         prime_eval_thread(self.client, user_id, thread_id, query)
         context = self.client.thread.get_user_context(thread_id=thread_id)
-        parts = [getattr(context, "context", None) or ""]
 
         # Bonus: edge facts carry valid_at/invalid_at validity ranges, which
         # surface deadline/open-loop facts the Context Block may summarize away.
@@ -37,9 +43,46 @@ class StudentMemory:
             scope="edges",
             limit=30,
         )
-        if edges is not None:
-            parts.append(render_graph_search(edges))
-        return join_nonempty(parts)
+
+        # Fact extraction can drop literal codes (a "finish the benchmark
+        # report" fact loses LAB-REPORT-1600), so pull a few query-relevant
+        # marker-bearing raw episodes as compact notes. The mixed-case budget
+        # trim keeps only the HEAD of this text, so order by usefulness per
+        # query: literal-marker notes, then query-ranked facts, then the broad
+        # Context Block narrative.
+        episodes = safe_call(
+            self.client.graph.search,
+            user_id=user_id,
+            query=cap_query(query),
+            scope="episodes",
+            limit=6,
+        )
+        episode_texts: list[str] = []
+        notes: list[str] = []
+        for ep in (getattr(episodes, "episodes", None) or []) if episodes else []:
+            content = (getattr(ep, "content", "") or "").strip()
+            if not content:
+                continue
+            episode_texts.append(content)
+            if MARKER_RE.search(content) and len(notes) < 3:
+                notes.append("NOTE: " + content[:180])
+
+        edge_text = render_graph_search(edges) if edges is not None else ""
+        context_text = getattr(context, "context", None) or ""
+
+        # Durable identifiers are the highest-value atoms of long-term memory,
+        # and Zep's fact extraction sometimes drops them ("finish the
+        # benchmark report" loses LAB-REPORT-1600). Mine every literal code
+        # from the sources just retrieved (all user-scoped, so no cross-user
+        # leak is possible) and pin them at the very head so the budget trim
+        # can never cut an identifier away.
+        markers: list[str] = []
+        for found in MARKER_RE.findall("\n".join([context_text, edge_text, *episode_texts])):
+            if found not in markers:
+                markers.append(found)
+        header = "MARKERS: " + ", ".join(markers[:12]) if markers else ""
+
+        return join_nonempty([header, "\n".join(notes), edge_text, context_text])
 
     def retrieve_episodic(self, user_id: str, query: str) -> str:
         # LAB TODO 2/4 - user-scoped episode search (past trajectories).
@@ -52,14 +95,13 @@ class StudentMemory:
         # Two defenses so marker-bearing reflections survive the tight
         # episodic budget (which keeps only the HEAD of the rendered text):
         # 1) rank episodes that carry durable markers (ASYNC-FIX-20 style
-        #    codes, same regex as short_term durable notes) before verbose
-        #    marker-less ones - long paraphrased eval queries stored as
-        #    episodes would otherwise outrank the actual trajectory;
+        #    codes) before verbose marker-less ones - long paraphrased eval
+        #    queries stored as episodes would otherwise outrank the actual
+        #    trajectory;
         # 2) cap each episode's length so more distinct episodes fit.
-        marker_re = re.compile(r"\b[A-Z][A-Z0-9-]{5,}\b")
         episodes = list(getattr(results, "episodes", None) or [])
         episodes.sort(
-            key=lambda e: 0 if marker_re.search(getattr(e, "content", "") or "") else 1
+            key=lambda e: 0 if MARKER_RE.search(getattr(e, "content", "") or "") else 1
         )
         ranked = SimpleNamespace(
             context=getattr(results, "context", None),
@@ -81,7 +123,31 @@ class StudentMemory:
             scope="episodes",
             limit=8,
         )
-        text = render_graph_search(results)
+        # Each seeded document exists twice in the graph (a JSON episode and a
+        # plain-text summary episode). Rendering both would let one document's
+        # duplicate fill the tight semantic budget and push the next document
+        # out entirely, so deduplicate on the summary text and keep one
+        # compact line per document.
+        lines: list[str] = []
+        seen: set[str] = set()
+        for ep in getattr(results, "episodes", None) or []:
+            content = (getattr(ep, "content", "") or "").strip()
+            if not content:
+                continue
+            entity, summary = "", content
+            if content.startswith("{"):
+                try:
+                    doc = json.loads(content)
+                    entity = str(doc.get("entity") or "")
+                    summary = str(doc.get("summary") or content)
+                except Exception:
+                    pass
+            key = normalize(summary)
+            if key in seen:
+                continue
+            seen.add(key)
+            lines.append(f"EPISODE: {entity}: {summary}" if entity else f"EPISODE: {summary}")
+        text = "\n".join(lines)
         if not text.strip():
             fallback = self.client.graph.search(
                 graph_id=graph_id,
