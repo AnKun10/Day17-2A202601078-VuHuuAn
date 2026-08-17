@@ -194,6 +194,8 @@ function App() {
             Lab 17 — Multi-Memory Agent Demo <Text style={{ color: "#9ca3af", fontSize: 13 }}>Zep · Ant Design</Text>
           </Title>
           <Space>
+            {meta.golden_id &&
+              <Tag color="gold" style={{ marginInlineEnd: 0 }}>golden: {meta.golden_id}</Tag>}
             <Badge status={meta.zep_ok ? "success" : "error"} text={<Text style={{ color: "#d1d5db" }}>Zep</Text>} />
             <Badge status={meta.gemini_ok ? "success" : "warning"}
                    text={<Text style={{ color: "#d1d5db" }}>LLM ({meta.model || "-"})</Text>} />

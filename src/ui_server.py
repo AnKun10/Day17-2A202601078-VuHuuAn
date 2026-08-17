@@ -170,6 +170,14 @@ class Handler(BaseHTTPRequestHandler):
             if self.path in ("/", "/index.html"):
                 self._send_file(UI_DIR / "index.html", "text/html; charset=utf-8")
             elif self.path == "/api/cases":
+                golden_id = ""
+                try:
+                    from .utils import GOLDEN_PATH, load_json
+
+                    if GOLDEN_PATH.exists():
+                        golden_id = str(load_json(GOLDEN_PATH).get("dataset_id") or "")
+                except Exception:
+                    pass
                 self._send_json(
                     {
                         "cases": load_cases(),
@@ -178,6 +186,7 @@ class Handler(BaseHTTPRequestHandler):
                             "gemini_ok": openai_available() or gemini_available(),
                             "model": OPENAI_MODEL if openai_available() else settings.gemini_model,
                             "context_tokens": settings.context_tokens,
+                            "golden_id": golden_id,
                         },
                     }
                 )
