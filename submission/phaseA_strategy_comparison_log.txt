@@ -1,0 +1,36 @@
+﻿docker :  Container vinuni-lab17-zep-memory-redis-1  Running
+At line:1 char:302
++ ... tch {} } }; docker compose run --rm app python -m src.demo_memory_str ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( Container vinu...edis-1  Running:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ Container vinuni-lab17-zep-memory-qdrant-1  Running
+           Context strategies on the E10-style stream (30 turns)           
+┏━━━━━━━━━━━━━┳━━━┳━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ Strategy    ┃ K ┃ Tokens ┃ Msgs kept ┃ Compactions ┃ Deadline survives? ┃
+┡━━━━━━━━━━━━━╇━━━╇━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│ buffer      │ 6 │    437 │        30 │           0 │ YES                │
+│ window-only │ 6 │     86 │         6 │          24 │ NO (0/3)           │
+│ summary     │ 6 │    426 │         5 │           5 │ YES                │
+│ sliding     │ 6 │    511 │         6 │          24 │ YES                │
+│ hybrid      │ 6 │    302 │         8 │          24 │ YES                │
+│ buffer      │ 4 │    437 │        30 │           0 │ YES                │
+│ window-only │ 4 │     58 │         4 │          26 │ NO (0/3)           │
+│ summary     │ 4 │    512 │         3 │           9 │ YES                │
+│ sliding     │ 4 │    512 │         4 │          26 │ YES                │
+│ hybrid      │ 4 │    273 │         6 │          26 │ YES                │
+└─────────────┴───┴────────┴───────────┴─────────────┴────────────────────┘
+Report written to /workspace/reports/strategy_comparison.md
+
+Rendered context at K=4 (the graded variation):
+───────────────────────────────── window-only ──────────────────────────────────
+user: Filler turn 25 about an already-resolved detail.
+assistant: Filler turn 26 about an already-resolved detail.
+user: Filler turn 27 about an already-resolved detail.
+assistant: Filler turn 28 about an already-resolved detail.
+─────────────────────────────────── sliding ────────────────────────────────────
+<SESSION_SUMMARY>
+user: Constraint: REVIEW-DEADLINE-1600 - project review is Friday at 16:00 and 
+must not be forgotten. | assistant: Acknowledged review constraint. | user: 
+Filler turn 1 about an already-resolved detail. | assistant: Filler turn 2 about

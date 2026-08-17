@@ -1,0 +1,26 @@
+﻿docker :  Container vinuni-lab17-zep-memory-redis-1  Running
+At line:1 char:302
++ ... tch {} } }; docker compose run --rm app python -m src.evaluate --impl ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( Container vinu...edis-1  Running:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ Container vinuni-lab17-zep-memory-qdrant-1  Running
+E09 long_term: Lan uu tien stack backend nao cho LOTUS-88?
+  PASS  1262.9 ms
+E02 long_term: Voi demo ca nhan cua Minh, ngon ngu uu tien la gi?
+  PASS  1166.7 ms
+E03 long_term: Minh con open loop hay deadline nao chua hoan thanh?
+  PASS  1199.5 ms
+E08 long_term: Backend cua BLUEBIRD-42 bat buoc dung stack gi?
+  PASS  1143.8 ms
+           Benchmark summary            
+┏━━━━━━┳━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━┓
+┃ Case ┃ Layer     ┃ Pass ┃ Latency ms ┃
+┡━━━━━━╇━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━┩
+│ E09  │ long_term │ yes  │     1262.9 │
+│ E02  │ long_term │ yes  │     1166.7 │
+│ E03  │ long_term │ yes  │     1199.5 │
+│ E08  │ long_term │ yes  │     1143.8 │
+└──────┴───────────┴──────┴────────────┘
+Reports: /workspace/reports/benchmark.json | /workspace/reports/benchmark.md

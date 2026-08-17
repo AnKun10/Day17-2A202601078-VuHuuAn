@@ -1,0 +1,21 @@
+﻿docker :  Container vinuni-lab17-zep-memory-qdrant-1  Running
+At line:1 char:302
++ ... tch {} } }; docker compose run --rm app python -m src.evaluate --impl ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( Container vinu...rant-1  Running:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ Container vinuni-lab17-zep-memory-redis-1  Running
+E04 episodic: Lan truoc Minh fix async HTTP timeout bang cach nao?
+  PASS  389.1 ms
+E05 episodic: Reflection cua su co async la gi, tang timeout co phai root fix 
+khong?
+  PASS  221.0 ms
+           Benchmark summary           
+┏━━━━━━┳━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━┓
+┃ Case ┃ Layer    ┃ Pass ┃ Latency ms ┃
+┡━━━━━━╇━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━┩
+│ E04  │ episodic │ yes  │      389.1 │
+│ E05  │ episodic │ yes  │      221.0 │
+└──────┴──────────┴──────┴────────────┘
+Reports: /workspace/reports/benchmark.json | /workspace/reports/benchmark.md

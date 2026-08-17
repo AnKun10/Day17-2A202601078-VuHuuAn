@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lab 17 — Memory Agent Demo (Ant Design)</title>
+<link rel="stylesheet" href="https://unpkg.com/antd@5.22.2/dist/reset.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/dayjs@1.11.13/dayjs.min.js"></script>
+<script src="https://unpkg.com/antd@5.22.2/dist/antd.min.js"></script>
+<script src="https://unpkg.com/@ant-design/icons@5.5.1/dist/index.umd.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<style>
+  body { background: #f5f5f5; }
+  .mono { font-family: 'Cascadia Mono', Consolas, monospace; font-size: 12.5px;
+          white-space: pre-wrap; word-break: break-word; max-height: 340px; overflow: auto;
+          background: #fafafa; border-radius: 8px; padding: 10px; }
+  .chat-scroll { max-height: 380px; overflow-y: auto; padding: 4px 2px; }
+  .bubble { max-width: 82%; padding: 8px 12px; border-radius: 12px; margin-bottom: 8px;
+            white-space: pre-wrap; word-break: break-word; font-size: 13.5px; line-height: 1.5; }
+  .bubble.user { background: #4f46e5; color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+  .bubble.assistant { background: #fff; border: 1px solid #e5e7eb; border-bottom-left-radius: 4px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useMemo, useRef } = React;
+const {
+  ConfigProvider, Layout, Menu, Typography, Card, Descriptions, Tag, Button, Alert,
+  Collapse, Progress, Statistic, Row, Col, Input, Space, Spin, Badge, Empty, Tooltip, message, theme,
+} = antd;
+const { PlayCircleOutlined, SendOutlined, RobotOutlined, UserOutlined,
+        DatabaseOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined } = icons;
+const { Header, Sider, Content } = Layout;
+const { Title, Text, Paragraph } = Typography;
+
+const LAYER_COLORS = {
+  short_term: "#2563eb", long_term: "#059669", episodic: "#d97706", semantic: "#7c3aed", mixed: "#db2777",
+};
+const LAYER_ORDER = ["short_term", "long_term", "episodic", "semantic", "mixed"];
+
+const api = async (path, body) => {
+  const res = await fetch(path, body
+    ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+    : undefined);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+};
+
+const LayerTag = ({ layer }) => (
+  <Tag color={LAYER_COLORS[layer] || "#475569"} style={{ marginInlineEnd: 4 }}>{layer}</Tag>
+);
+
+const MarkerChecks = ({ check }) => (
+  <Space wrap size={[4, 6]}>
+    {check.must_contain_all.map(m => {
+      const ok = !check.missing.includes(m);
+      return (
+        <Tag key={m} icon={ok ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+             color={ok ? "success" : "error"}>{m}</Tag>
+      );
+    })}
+    {check.must_not_contain.map(m => {
+      const leaked = check.forbidden_found.includes(m);
+      return (
+        <Tooltip key={m} title="must_not_contain">
+          <Tag icon={leaked ? <CloseCircleOutlined /> : <CheckCircleOutlined />}
+               color={leaked ? "error" : "default"} style={{ textDecoration: "line-through" }}>{m}</Tag>
+        </Tooltip>
+      );
+    })}
+  </Space>
+);
+
+const BudgetCards = ({ budget }) => (
+  <Row gutter={[12, 12]}>
+    {["short_term", "long_term", "episodic", "semantic"].map(layer => {
+      const b = budget[layer] || {};
+      const pct = b.limit_tokens ? Math.min(100, Math.round((b.used_tokens / b.limit_tokens) * 100)) : 0;
+      return (
+        <Col xs={12} md={6} key={layer}>
+          <Card size="small">
+            <Statistic title={<span><LayerTag layer={layer} />{""}</span>}
+                       value={b.used_tokens || 0} suffix={`/ ${b.limit_tokens || 0} tok`}
+                       valueStyle={{ fontSize: 18 }} />
+            <Progress percent={pct} size="small" showInfo={false}
+                      strokeColor={LAYER_COLORS[layer]} />
+            <Text type="secondary" style={{ fontSize: 11 }}>raw {b.raw_tokens || 0} tok</Text>
+          </Card>
+        </Col>
+      );
+    })}
+  </Row>
+);
+
+function App() {
+  const [cases, setCases] = useState([]);
+  const [meta, setMeta] = useState({});
+  const [selectedId, setSelectedId] = useState(null);
+  const [results, setResults] = useState({});
+  const [chats, setChats] = useState({});
+  const [running, setRunning] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [draft, setDraft] = useState("");
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    api("/api/cases").then(d => {
+      setCases(d.cases); setMeta(d.meta);
+      if (d.cases.length) setSelectedId(d.cases[0].id);
+    }).catch(e => message.error("Load cases failed: " + e.message));
+  }, []);
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); },
+    [chats, selectedId, sending]);
+
+  const current = useMemo(() => cases.find(c => c.id === selectedId), [cases, selectedId]);
+  const result = results[selectedId];
+  const chat = chats[selectedId] || [];
+
+  const menuItems = LAYER_ORDER.map(layer => {
+    const group = cases.filter(c => c.expected_layer === layer);
+    if (!group.length) return null;
+    return {
+      key: layer, type: "group",
+      label: <span><LayerTag layer={layer} /><Text type="secondary">{group.length} case</Text></span>,
+      children: group.map(c => ({
+        key: c.id,
+        label: <span><b>{c.id}</b> · {c.user_id}{results[c.id] &&
+          <Badge status={results[c.id].check.passed ? "success" : "error"} style={{ marginLeft: 6 }} />}</span>,
+      })),
+    };
+  }).filter(Boolean);
+
+  const runRetrieval = async () => {
+    if (!current) return;
+    setRunning(true);
+    try {
+      const r = await api("/api/retrieve", { case_id: current.id, extra_messages: chat });
+      setResults(prev => ({ ...prev, [current.id]: r }));
+      message.success(`Retrieval ${r.check.passed ? "PASS" : "FAIL"} · ${r.latency_ms} ms`);
+    } catch (e) { message.error(e.message); }
+    setRunning(false);
+  };
+
+  const sendChat = async () => {
+    const text = draft.trim();
+    if (!text || !current) return;
+    setDraft(""); setSending(true);
+    const history = chats[selectedId] || [];
+    setChats(prev => ({ ...prev, [selectedId]: [...history, { role: "user", content: text }] }));
+    try {
+      const r = await api("/api/chat", { case_id: current.id, history, message: text });
+      setResults(prev => ({ ...prev, [selectedId]: r }));
+      setChats(prev => ({
+        ...prev,
+        [selectedId]: [...(prev[selectedId] || []), { role: "assistant", content: r.reply }],
+      }));
+    } catch (e) {
+      message.error(e.message);
+      setChats(prev => ({
+        ...prev,
+        [selectedId]: [...(prev[selectedId] || []), { role: "assistant", content: "(error: " + e.message + ")" }],
+      }));
+    }
+    setSending(false);
+  };
+
+  const evidenceItems = result ? [
+    {
+      key: "merged",
+      label: <span><ThunderboltOutlined /> Merged context (budget-trimmed 10/4/3/3) — {
+        result.check.passed
+          ? <Tag color="success">PASS</Tag>
+          : <Tag color="error">FAIL</Tag>}</span>,
+      children: <div className="mono">{result.merged_context || "(empty)"}</div>,
+    },
+    ...Object.entries(result.layers).filter(([, v]) => v && v.trim()).map(([k, v]) => ({
+      key: k,
+      label: <span><LayerTag layer={k} /> evidence ({v.length} chars)</span>,
+      children: <div className="mono">{v}</div>,
+    })),
+  ] : [];
+
+  return (
+    <ConfigProvider theme={{ token: { colorPrimary: "#4f46e5", borderRadius: 8 } }}>
+      <Layout style={{ minHeight: "100vh" }}>
+        <Header style={{ background: "#111827", display: "flex", alignItems: "center", gap: 12 }}>
+          <DatabaseOutlined style={{ color: "#a5b4fc", fontSize: 22 }} />
+          <Title level={4} style={{ color: "#fff", margin: 0, flex: 1 }}>
+            Lab 17 — Multi-Memory Agent Demo <Text style={{ color: "#9ca3af", fontSize: 13 }}>Zep · Ant Design</Text>
+          </Title>
+          <Space>
+            <Badge status={meta.zep_ok ? "success" : "error"} text={<Text style={{ color: "#d1d5db" }}>Zep</Text>} />
+            <Badge status={meta.gemini_ok ? "success" : "warning"}
+                   text={<Text style={{ color: "#d1d5db" }}>LLM ({meta.model || "-"})</Text>} />
+          </Space>
+        </Header>
+        <Layout>
+          <Sider width={252} theme="light" style={{ overflow: "auto", height: "calc(100vh - 64px)" }}>
+            <Menu mode="inline" items={menuItems} selectedKeys={selectedId ? [selectedId] : []}
+                  onClick={({ key }) => setSelectedId(key)} style={{ borderInlineEnd: 0 }} />
+          </Sider>
+          <Content style={{ padding: 16, overflow: "auto", height: "calc(100vh - 64px)" }}>
+            {!current ? <Spin /> : (
+              <Row gutter={[16, 16]}>
+                <Col xs={24} xl={14}>
+                  <Space direction="vertical" size={12} style={{ display: "flex" }}>
+                    <Card size="small"
+                          title={<span><b>{current.id}</b> <LayerTag layer={current.expected_layer} /></span>}
+                          extra={<Button type="primary" icon={<PlayCircleOutlined />} loading={running}
+                                         onClick={runRetrieval}>Run retrieval</Button>}>
+                      <Descriptions size="small" column={2} items={[
+                        { key: "u", label: "User", children: <Text code>{current.user_id}</Text> },
+                        { key: "t", label: "Thread", children: <Text code>{current.thread_id}</Text> },
+                        { key: "d", label: "Description", span: 2,
+                          children: <Text type="secondary">{current.description || "-"}</Text> },
+                      ]} />
+                      <Paragraph style={{ marginTop: 10, marginBottom: 4, background: "#f8fafc",
+                                          padding: 10, borderRadius: 8 }}>
+                        {current.query}
+                      </Paragraph>
+                      <MarkerChecks check={result ? result.check : {
+                        must_contain_all: current.must_contain_all || [],
+                        must_not_contain: current.must_not_contain || [],
+                        missing: current.must_contain_all || [], forbidden_found: [],
+                      }} />
+                    </Card>
+
+                    {result ? (
+                      <Space direction="vertical" size={12} style={{ display: "flex" }}>
+                        <Alert type={result.check.passed ? "success" : "error"} showIcon
+                               message={result.check.passed
+                                 ? `PASS — all evidence markers found (${result.latency_ms} ms)`
+                                 : `FAIL — missing: ${result.check.missing.join(", ") || "-"}`} />
+                        <BudgetCards budget={result.budget} />
+                        <Collapse items={evidenceItems} defaultActiveKey={["merged"]} />
+                      </Space>
+                    ) : (
+                      <Card size="small"><Empty description="Chưa chạy retrieval — bấm Run retrieval" /></Card>
+                    )}
+                  </Space>
+                </Col>
+
+                <Col xs={24} xl={10}>
+                  <Card size="small"
+                        title={<span><RobotOutlined /> Chat tiếp trên <Text code>{current.user_id}</Text> / <Text code>{current.thread_id}</Text></span>}
+                        style={{ display: "flex", flexDirection: "column" }}>
+                    <div className="chat-scroll">
+                      {chat.length === 0 && (
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
+                               description="Gửi tin nhắn — agent sẽ retrieve memory lại cho từng turn" />
+                      )}
+                      {chat.map((m, i) => (
+                        <div key={i} style={{ display: "flex" }}>
+                          <div className={"bubble " + m.role}>
+                            {m.role === "user" ? <UserOutlined /> : <RobotOutlined />} {m.content}
+                          </div>
+                        </div>
+                      ))}
+                      {sending && <Spin size="small" style={{ marginLeft: 8 }} />}
+                      <div ref={chatEndRef} />
+                    </div>
+                    <Space.Compact style={{ width: "100%", marginTop: 10 }}>
+                      <Input.TextArea autoSize={{ minRows: 1, maxRows: 4 }} value={draft}
+                                      placeholder="Nhắn như user này… (Enter để gửi)"
+                                      onChange={e => setDraft(e.target.value)}
+                                      onPressEnter={e => { if (!e.shiftKey) { e.preventDefault(); sendChat(); } }} />
+                      <Button type="primary" icon={<SendOutlined />} loading={sending} onClick={sendChat}>Gửi</Button>
+                    </Space.Compact>
+                  </Card>
+                </Col>
+              </Row>
+            )}
+          </Content>
+        </Layout>
+      </Layout>
+    </ConfigProvider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

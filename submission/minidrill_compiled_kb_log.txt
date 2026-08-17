@@ -1,0 +1,23 @@
+﻿docker :  Container vinuni-lab17-zep-memory-qdrant-1  Running
+At line:1 char:302
++ ... tch {} } }; docker compose run --rm app python -m src.compiled_kb 2>& ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( Container vinu...rant-1  Running:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ Container vinuni-lab17-zep-memory-redis-1  Running
+Compiled KB query: payment retry policy and provenance
+<EPISODES>
+Episodes are source message or document excerpts shown in selection order.
+  - Created At: 2026-08-17 06:27:17
+    Source: json
+    Content: {"page_id":"wiki-payment-retry","entity":"PaymentRetryPolicy","summary":"For POST payment requests, send Idempotency-Key, use exponential backoff and cap retries at max-3-retries.","source_ids":["PAYMENT-RULE-3"],"provenance":"data/knowledge.jsonl","freshness":"2026-08-17","contradictions":[],"decision":"Idempotency-Key is mandatory before retrying a payment POST."}
+</EPISODES>
+
+<FACTS>
+The timestamp shown for each fact is the reference time of the source message that introduced it — i.e. when the fact was first mentioned. `date unknown` means no reference time is recorded for the source message.
+  - The PaymentRetryPolicy has a limit of max-3-retries. (2026-08-17 06:27:17)
+  - Before increasing timeout, inspect concurrency. (2026-08-17 06:27:17)
+  - Before increasing timeout, inspect client lifecycle. (2026-08-17 06:27:17)
+  - Before increasing timeout, inspect connection pooling. (2026-08-17 06:27:17)
+  - The PaymentRetryPolicy uses exponential backoff for retries. (2026-08-17 06:27:17)

@@ -1,0 +1,20 @@
+﻿docker :  Container vinuni-lab17-zep-memory-redis-1  Running
+At line:1 char:491
++ ... ct -Skip 2; docker compose run --rm app python -m src.evaluate --impl ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( Container vinu...edis-1  Running:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ Container vinuni-lab17-zep-memory-qdrant-1  Running
+E06 semantic: Quy tac retry POST payment la gi?
+  PASS  336.4 ms
+E11 semantic: Theo incident playbook, truoc khi tang timeout can kiem tra gi?
+  PASS  223.2 ms
+           Benchmark summary           
+┏━━━━━━┳━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━┓
+┃ Case ┃ Layer    ┃ Pass ┃ Latency ms ┃
+┡━━━━━━╇━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━┩
+│ E06  │ semantic │ yes  │      336.4 │
+│ E11  │ semantic │ yes  │      223.2 │
+└──────┴──────────┴──────┴────────────┘
+Reports: /workspace/reports/benchmark.json | /workspace/reports/benchmark.md

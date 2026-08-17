@@ -1,0 +1,11 @@
+﻿docker :  Container vinuni-lab17-zep-memory-qdrant-1  Running
+At line:1 char:302
++ ... tch {} } }; docker compose run --rm app python -m src.forget --user-i ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( Container vinu...rant-1  Running:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ Container vinuni-lab17-zep-memory-redis-1  Running
+Zep user absent: True
+Redis user keys remaining: 0
+Shared semantic KB remains intact because it stores domain knowledge, not user PII.
