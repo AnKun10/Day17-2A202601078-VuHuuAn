@@ -388,9 +388,69 @@
   </div>
 </section>
 
-<!-- ============ 9 · STRATEGY COMPARISON ============ -->
+<!-- ============ 9 · CASE STUDY G20 ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">09</span> · So sánh · quản lý context ngắn hạn</div>
+  <div class="eyebrow"><span class="n">09</span> · Case study · <span style="color:var(--mix)">mixed</span></div>
+  <h1>G20 — một câu hỏi đánh thức ba tầng bộ nhớ</h1>
+  <div class="cols c2 body">
+    <div class="rowlist">
+      <div class="card">
+        <p class="small" style="line-height:1.7">"Trong thread này mình vừa nhắc <b style="color:var(--stm)">constraint giờ standup</b>. Lát nữa mình sẽ thêm retry payment vào đúng <b style="color:var(--lt)">backend dự án công ty</b>. Ghép ba mảnh: constraint còn hiệu lực, stack bắt buộc, và <b style="color:var(--sem)">cách đánh dấu request payment</b> để không trùng đơn."</p>
+        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+          <span class="tag t-stm">short_term</span><span class="tag t-lt">long_term</span><span class="tag t-sem">semantic</span>
+          <span class="mono small" style="color:#4DBE93">PASS · 2.3s · merged 623 tok</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Vì sao khó</h3>
+        <ul class="small" style="font-size:14.5px; padding-left:18px; display:flex; flex-direction:column; gap:7px">
+          <li>Ba evidence nằm ở <b>ba kho khác nhau</b> — thiếu bất kỳ mảnh nào là FAIL cả case.</li>
+          <li><span class="mono" style="color:var(--stm)">HOLD-ALPHA-0900</span> phải <b>sống qua compaction</b>: thread fixture 14 turn, raw turn chứa constraint đã bị evict — chỉ còn trong durable notes.</li>
+          <li><span class="mono" style="color:var(--lt)">NestJS</span> nằm trong 1 781 token long-term bị <b>trim còn 324 (−82%)</b> — sống nhờ dòng <span class="mono">MARKERS:</span> + fact rank theo query ở head.</li>
+          <li>Kèm ràng buộc âm: <span class="mono" style="text-decoration:line-through">LOTUS-88</span> của Lan <b>không được xuất hiện</b> — isolation chạy ngầm trong mọi call.</li>
+        </ul>
+      </div>
+    </div>
+    <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
+      <svg viewBox="0 0 430 260" role="img" aria-label="Ba nguồn bộ nhớ cấp ba marker khác nhau, qua bộ trim budget thành merged context PASS" style="color:#93A0B8">
+        <defs><marker id="ar9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+        <g font-size="11.5" font-family="Consolas,monospace">
+          <rect x="8" y="14" width="188" height="58" rx="8" fill="#1B2536" stroke="#4E86EC"/>
+          <text x="102" y="36" text-anchor="middle" fill="#E9EDF6" font-family="system-ui" font-size="12.5" font-weight="600">Durable notes (fixture)</text>
+          <text x="102" y="56" text-anchor="middle" fill="#4E86EC">HOLD-ALPHA-0900 · 09:00</text>
+          <rect x="8" y="100" width="188" height="58" rx="8" fill="#1B2536" stroke="#28936B"/>
+          <text x="102" y="122" text-anchor="middle" fill="#E9EDF6" font-family="system-ui" font-size="12.5" font-weight="600">Zep user graph (stage 3)</text>
+          <text x="102" y="142" text-anchor="middle" fill="#28936B">BLUEBIRD-42 → NestJS</text>
+          <rect x="8" y="186" width="188" height="58" rx="8" fill="#1B2536" stroke="#8B67EA"/>
+          <text x="102" y="208" text-anchor="middle" fill="#E9EDF6" font-family="system-ui" font-size="12.5" font-weight="600">Shared KB (payment)</text>
+          <text x="102" y="228" text-anchor="middle" fill="#8B67EA">Idempotency-Key</text>
+        </g>
+        <g stroke="currentColor">
+          <line x1="196" y1="43"  x2="252" y2="112" marker-end="url(#ar9)"/>
+          <line x1="196" y1="129" x2="252" y2="129" marker-end="url(#ar9)"/>
+          <line x1="196" y1="215" x2="252" y2="146" marker-end="url(#ar9)"/>
+        </g>
+        <g font-size="10.5" font-family="Consolas,monospace" fill="currentColor">
+          <text x="224" y="70" text-anchor="middle">169 tok</text>
+          <text x="224" y="122" text-anchor="middle">1781→324</text>
+          <text x="224" y="188" text-anchor="middle">111 tok</text>
+        </g>
+        <rect x="256" y="99" width="82" height="60" rx="8" fill="#1B2536" stroke="currentColor"/>
+        <text x="297" y="124" text-anchor="middle" fill="#E9EDF6" font-size="12" font-family="system-ui" font-weight="600">assemble</text>
+        <text x="297" y="142" text-anchor="middle" fill="#E8DCC3" font-size="10.5" font-family="Consolas,monospace">10/4/3/3</text>
+        <line x1="338" y1="129" x2="366" y2="129" stroke="currentColor" marker-end="url(#ar9)"/>
+        <rect x="370" y="99" width="54" height="60" rx="8" fill="#1B2536" stroke="#4DBE93"/>
+        <text x="397" y="124" text-anchor="middle" fill="#4DBE93" font-size="12" font-family="system-ui" font-weight="700">PASS</text>
+        <text x="397" y="142" text-anchor="middle" fill="#93A0B8" font-size="10.5" font-family="Consolas,monospace">623 tok</text>
+      </svg>
+      <figcaption>Mỗi tầng đóng góp đúng một marker; chỉ long-term bị trim (−82%) và vẫn không mất identifier nào.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 10 · STRATEGY COMPARISON ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">10</span> · So sánh · quản lý context ngắn hạn</div>
   <h1>Năm chiến lược, một câu hỏi: deadline có sống sót?</h1>
   <div class="cols c2 body">
     <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
@@ -440,7 +500,7 @@
 
 <!-- ============ 10 · ZEP VS SELF-BUILD ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">10</span> · So sánh · backend bộ nhớ</div>
+  <div class="eyebrow"><span class="n">11</span> · So sánh · backend bộ nhớ</div>
   <h1>Managed Zep hay tự ghép Redis + Qdrant?</h1>
   <div class="body">
     <div class="card" style="padding-top:8px">
@@ -460,7 +520,7 @@
 
 <!-- ============ 11 · RESULTS ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">11</span> · Kết quả</div>
+  <div class="eyebrow"><span class="n">12</span> · Kết quả</div>
   <h1>Ground truth nói gì</h1>
   <div class="cols c4" style="flex:none">
     <div class="stat"><div class="v">11/11</div><div class="l">practice E01–E11 · hit rate 100%</div></div>
@@ -499,7 +559,7 @@
 
 <!-- ============ 12 · PRIVACY ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">12</span> · Privacy by design</div>
+  <div class="eyebrow"><span class="n">13</span> · Privacy by design</div>
   <h1>Bộ nhớ phải biết quên đúng cách</h1>
   <div class="body" style="justify-content:center">
     <figure>
@@ -537,7 +597,7 @@
 
 <!-- ============ 13 · CLOSING ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">13</span> · Kết luận &amp; demo</div>
+  <div class="eyebrow"><span class="n">14</span> · Kết luận &amp; demo</div>
   <h1>Năm điều mang về</h1>
   <div class="cols c2 body">
     <div class="card">
