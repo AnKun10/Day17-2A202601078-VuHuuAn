@@ -84,7 +84,7 @@
   <p class="sub" style="font-size:20px; max-width:720px">Bốn tầng bộ nhớ &middot; định tuyến theo câu hỏi &middot; token budget 10/4/3/3 &middot; benchmark chấm bằng ground truth thay vì lời nói của LLM.</p>
   <div class="chips">
     <span class="chip">Practice <b>11/11</b></span>
-    <span class="chip">Golden <b>20/20</b> (+10)</span>
+    <span class="chip">Golden v2 + v3 (mix-heavy) <b>20/20</b> (+10)</span>
     <span class="chip">Demo UI <b>Ant Design + GPT-5.6-Luna</b></span>
   </div>
   <p class="small" style="margin-top:40px">Vũ Hữu An · 2A202601078 &nbsp;·&nbsp; <span class="kbd">←</span> <span class="kbd">→</span> để chuyển slide</p>
@@ -237,17 +237,18 @@
   <div class="cols c2 body">
     <div class="rowlist">
       <div class="card">
-        <h3>Cách retrieve</h3>
+        <h3>Cách retrieve — thứ tự là thiết kế</h3>
         <ul class="small" style="font-size:15px">
-          <li>Tạo thread eval → <code>thread.get_user_context(thread_id)</code> → Zep tự lắp <b>Context Block</b> (user summary + fact liên quan).</li>
-          <li>Bonus: <code>graph.search(scope="edges", limit=30)</code> — mỗi fact kèm <code>valid_at / invalid_at</code>; limit thấp sẽ bỏ sót fact deadline/open-loop.</li>
+          <li><code>thread.get_user_context</code> → <b>Context Block</b>; cộng <code>graph.search(scope="edges", limit=30)</code> — fact kèm <code>valid_at / invalid_at</code>.</li>
+          <li>Vì budget trim giữ <b>phần đầu</b>, text được xếp: <span class="mono">MARKERS:</span> (mã literal mine từ mọi nguồn) → NOTE episode mang marker → fact đã rank theo query → Context Block.</li>
+          <li><b>Bài học golden v3 (G16):</b> Zep extract "finish the benchmark report" — <em>làm rơi mã</em> <span class="mono">LAB-REPORT-1600</span>; pin identifier lên đầu để trim không bao giờ cắt mất.</li>
         </ul>
       </div>
       <div class="card">
         <h3>Hai tính chất được chấm</h3>
         <ul class="small" style="font-size:15px">
           <li><b>Recency + scope (E08):</b> BLUEBIRD-42 chuyển sang TypeScript/NestJS — fact Python cũ <em>không bị xoá</em>, chỉ gắn <code>invalid_at</code>, vẫn đúng cho scope ORCHID-27.</li>
-          <li><b>User isolation (E09):</b> Lan hỏi thì tuyệt đối không thấy <span class="mono">ORCHID-27</span> của Minh — <code>user_id</code> là ranh giới bảo mật, không phải tham số tùy chọn.</li>
+          <li><b>User isolation (E09):</b> Lan không bao giờ thấy <span class="mono">ORCHID-27</span> của Minh — <code>user_id</code> là ranh giới bảo mật.</li>
         </ul>
       </div>
     </div>
@@ -279,7 +280,7 @@
           <li>Recall được cả hành trình: <em>tried</em> tăng timeout → fail · <em>worked</em> ClientSession + concurrency=20 · <em>reflection</em> connection churn, không phải timeout threshold.</li>
         </ul>
       </div>
-      <div class="note"><b>Bug thật ở golden G18:</b> query eval dài bị Zep lưu thành episode, rank cao hơn episode chứa fix thật và chiếm hết budget 240 token → thiếu <span class="mono">ClientSession</span>. Fix: <b>episode mang marker xếp lên đầu</b> trước khi trim → 20/20.</p></div>
+      <div class="note"><b>Bug thật ở golden v2 (G18):</b> query eval dài bị Zep lưu thành episode, rank cao hơn episode chứa fix thật và chiếm hết budget 240 token → thiếu <span class="mono">ClientSession</span>. Fix: <b>episode mang marker xếp lên đầu</b> trước khi trim (marker = mã có gạch nối + chữ số, loại được chữ hoa trần trong query nhiễu).</div>
     </div>
     <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
       <svg viewBox="0 0 430 240" role="img" aria-label="So sánh thứ tự episode trước và sau khi rank theo marker: episode chứa ASYNC-FIX-20 nhảy lên đầu, lọt vào vùng budget" style="color:#93A0B8">
@@ -300,7 +301,7 @@
         <line x1="228" y1="156" x2="422" y2="156" stroke="#4DBE93" stroke-dasharray="5 4"/>
         <text x="325" y="222" text-anchor="middle" fill="#4DBE93" font-size="11">marker lọt vào budget → PASS</text>
       </svg>
-      <figcaption>Cùng 8 kết quả search — chỉ đổi thứ tự trước khi trim đã đổi kết quả G18.</figcaption>
+      <figcaption>Cùng 8 kết quả search — chỉ đổi thứ tự trước khi trim đã đổi kết quả G18 (golden v2).</figcaption>
     </figure>
   </div>
 </section>
@@ -314,9 +315,9 @@
       <div class="card">
         <h3>Cách retrieve</h3>
         <ul class="small" style="font-size:15px">
-          <li><code>graph.search(graph_id=…, scope="episodes", limit=8)</code> — search bằng <code>graph_id</code>, <b>không phải</b> <code>user_id</code>.</li>
-          <li>Fallback <code>scope="nodes"</code> khi episodes rỗng.</li>
+          <li><code>graph.search(graph_id=…, scope="episodes", limit=8)</code> — search bằng <code>graph_id</code>, <b>không phải</b> <code>user_id</code>; fallback <code>scope="nodes"</code>.</li>
           <li>KB: payment retry, incident playbook, privacy rule, context budget — mỗi doc kết thúc bằng một mã marker.</li>
+          <li><b>Bài học golden v3 (G18):</b> mỗi doc tồn tại 2 bản trong graph (JSON + text) — bản trùng của một doc chiếm hết budget 240 token, đẩy doc <span class="mono">BUDGET-10-4-3-3</span> ra ngoài. Fix: <b>dedupe theo summary</b>, mỗi doc còn một dòng gọn → cả 4 doc cùng lọt budget.</li>
         </ul>
       </div>
       <div class="card">
@@ -448,7 +449,7 @@
         <tr><td class="sub">Extraction → graph</td><td>tự động: message → fact/entity/episode</td><td>tự viết extractor + schema + pipeline</td></tr>
         <tr><td class="sub">Conflict / recency</td><td>temporal edge <code>valid_at/invalid_at</code> có sẵn</td><td>tự cài rule ghi đè + giữ provenance</td></tr>
         <tr><td class="sub">Context lắp sẵn</td><td>Context Block một lệnh gọi</td><td>tự ghép KV profile + vector hits</td></tr>
-        <tr><td class="sub">Latency retrieve</td><td class="mono">~1.1–1.8s (long-term)</td><td class="mono">&lt;10ms KV · ~50ms vector</td></tr>
+        <tr><td class="sub">Latency retrieve</td><td class="mono">~1.6–1.9s (long-term)</td><td class="mono">&lt;10ms KV · ~50ms vector</td></tr>
         <tr><td class="sub">Ingestion</td><td>bất đồng bộ — phải poll trước khi search</td><td>đồng bộ, kiểm soát được</td></tr>
         <tr><td class="sub">Rủi ro chính</td><td>ít kiểm soát schema, phụ thuộc API</td><td style="color:var(--fail)">tự sai isolation / deletion — bug bảo mật</td></tr>
       </table>
@@ -463,9 +464,9 @@
   <h1>Ground truth nói gì</h1>
   <div class="cols c4" style="flex:none">
     <div class="stat"><div class="v">11/11</div><div class="l">practice E01–E11 · hit rate 100%</div></div>
-    <div class="stat"><div class="v">20/20</div><div class="l">golden set ẩn · +10 điểm</div></div>
-    <div class="stat"><div class="v">700.9<span style="font-size:20px">ms</span></div><div class="l">latency retrieve trung bình</div></div>
-    <div class="stat"><div class="v">1602</div><div class="l">token case nặng nhất (E08, long-term)</div></div>
+    <div class="stat"><div class="v">20/20</div><div class="l">golden ẩn, cả v2 lẫn v3 mix-heavy · +10</div></div>
+    <div class="stat"><div class="v">932<span style="font-size:20px">ms</span></div><div class="l">latency retrieve trung bình (practice)</div></div>
+    <div class="stat"><div class="v">1819</div><div class="l">token case nặng nhất (E02, long-term)</div></div>
   </div>
   <div class="cols c2 body" style="margin-top:18px">
     <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
@@ -486,11 +487,11 @@
     <div class="rowlist">
       <div class="card">
         <h3>Cái bẫy "token reduction"</h3>
-        <p class="small">No-memory giảm <b class="mono">81.8%</b> token — vì nó không retrieve gì cả. Memory agent chỉ giảm <b class="mono">20.9%</b> nhưng đúng 100%. <b>Reduction chỉ có nghĩa khi đi kèm hit rate.</b></p>
+        <p class="small">No-memory giảm <b class="mono">81.8%</b> token — vì nó không retrieve gì cả. Memory agent chỉ giảm <b class="mono">18.8%</b> nhưng đúng 100%. <b>Reduction chỉ có nghĩa khi đi kèm hit rate.</b></p>
       </div>
       <div class="card">
         <h3>Chi phí nằm ở đâu</h3>
-        <p class="small">Long-term đắt nhất: latency 1.1–1.8s và 1600 token/case (Context Block + 30 edge facts) — đổi lấy độ phủ fact. Episodic/semantic chỉ ~250–400ms, ~150 token.</p>
+        <p class="small">Long-term đắt nhất: latency 1.6–1.9s và ~1800 token/case (Context Block + 30 edge facts + marker notes) — đổi lấy độ phủ fact. Episodic/semantic chỉ ~250–500ms, ~150 token.</p>
       </div>
     </div>
   </div>
