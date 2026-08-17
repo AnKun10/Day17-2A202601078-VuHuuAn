@@ -448,9 +448,53 @@
   </div>
 </section>
 
-<!-- ============ 10 · STRATEGY COMPARISON ============ -->
+<!-- ============ 10 · CASE STUDY G20 SOLUTION ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">10</span> · So sánh · quản lý context ngắn hạn</div>
+  <div class="eyebrow"><span class="n">10</span> · Case study · <span style="color:var(--mix)">lời giải G20</span></div>
+  <h1>Mỗi mảnh evidence sống sót nhờ một cơ chế riêng</h1>
+  <div class="cols c2 body">
+    <div class="rowlist">
+      <div class="card top" style="border-top-color:var(--stm); padding:14px 18px">
+        <p class="small" style="font-size:14.5px"><span class="tag t-stm">short_term</span>&nbsp; <b>Durable-note extraction.</b> Compaction evict raw turn nhưng regex marker + từ khóa <em>constraint</em> đã kịp ghim <span class="mono" style="color:var(--stm)">HOLD-ALPHA-0900</span> <b>nguyên văn</b> vào durable notes — không qua summary lossy nào.</p>
+      </div>
+      <div class="card top" style="border-top-color:var(--lt); padding:14px 18px">
+        <p class="small" style="font-size:14.5px"><span class="tag t-lt">long_term</span>&nbsp; <b>MARKERS-head + NOTE + fact rank.</b> Text 1 781 tok bị trim còn 324, nhưng head được xếp chủ động: dòng <span class="mono">MARKERS:</span> (mine từ mọi nguồn) → NOTE episode BLUEBIRD-42 (chứa <span class="mono" style="color:var(--lt)">NestJS</span> trong 180 ký tự đầu) → fact rank theo query. Identifier <b>miễn nhiễm với trim</b>.</p>
+      </div>
+      <div class="card top" style="border-top-color:var(--sem); padding:14px 18px">
+        <p class="small" style="font-size:14.5px"><span class="tag t-sem">semantic</span>&nbsp; <b>Query rank + dedupe.</b> Câu hỏi nhắc "đánh dấu request payment" → doc payment xếp hạng 1; dedupe bản JSON/text trùng nên <span class="mono" style="color:var(--sem)">Idempotency-Key</span> chỉ tốn 111 tok — không chèn ép doc nào khác.</p>
+      </div>
+      <div class="note" style="font-size:14px"><b>Assemble khép lại:</b> ưu tiên STM → LT → SEM, budget 10/4/3/3 → merged 623 tok đủ cả 3 marker; còn <span class="mono" style="text-decoration:line-through">LOTUS-88</span> không thể xuất hiện vì mọi call đều scope <code>user_id=minh-lab17</code>.</div>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; gap:8px">
+      <h3>Merged context thật (rút gọn)</h3>
+      <div style="background:var(--bg); border:1px solid var(--edge); border-radius:8px; padding:13px 15px; font-family:var(--mono); font-size:11.8px; line-height:1.65; color:var(--muted); overflow:auto; flex:1">
+&lt;SHORT_TERM&gt;<br>
+&lt;DURABLE_NOTES&gt;<br>
+- user: Constraint <b style="color:var(--stm)">HOLD-ALPHA-0900</b>: standup is<br>
+&nbsp;&nbsp;09:00 sharp and must not be forgotten.<br>
+&lt;/DURABLE_NOTES&gt; <span style="color:var(--faint)">… recent turns: filler …</span><br>
+<br>
+&lt;LONG_TERM&gt;<br>
+<span style="color:var(--ivory)">MARKERS:</span> ORCHID-27, <b style="color:var(--lt)">BLUEBIRD-42</b>, LAB-REPORT-1600,<br>
+&nbsp;&nbsp;ASYNC-FIX-20<br>
+NOTE: … BLUEBIRD-42, backend bat buoc dung<br>
+&nbsp;&nbsp;TypeScript voi <b style="color:var(--lt)">NestJS</b> …<br>
+FACT: … [valid_at=2026-08-05] <span style="color:var(--faint)">(rank theo query)</span><br>
+<span style="color:var(--faint)">[...trimmed...] ← 1781 → 324 tok</span><br>
+<br>
+&lt;SEMANTIC&gt;<br>
+EPISODE: Payment API Retry Policy: … MUST send<br>
+&nbsp;&nbsp;the same <b style="color:var(--sem)">Idempotency-Key</b> … max-3-retries.<br>
+&nbsp;&nbsp;Marker: PAYMENT-RULE-3.
+      </div>
+      <p class="small" style="color:#4DBE93; font-family:var(--mono); font-size:12.5px">✓ PASS — 3/3 marker · 0 forbidden · 623 tok · 2.3s</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 · STRATEGY COMPARISON ============ -->
+<section class="slide">
+  <div class="eyebrow"><span class="n">11</span> · So sánh · quản lý context ngắn hạn</div>
   <h1>Năm chiến lược, một câu hỏi: deadline có sống sót?</h1>
   <div class="cols c2 body">
     <figure class="card" style="display:flex; flex-direction:column; justify-content:center">
@@ -500,7 +544,7 @@
 
 <!-- ============ 10 · ZEP VS SELF-BUILD ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">11</span> · So sánh · backend bộ nhớ</div>
+  <div class="eyebrow"><span class="n">12</span> · So sánh · backend bộ nhớ</div>
   <h1>Managed Zep hay tự ghép Redis + Qdrant?</h1>
   <div class="body">
     <div class="card" style="padding-top:8px">
@@ -520,7 +564,7 @@
 
 <!-- ============ 11 · RESULTS ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">12</span> · Kết quả</div>
+  <div class="eyebrow"><span class="n">13</span> · Kết quả</div>
   <h1>Ground truth nói gì</h1>
   <div class="cols c4" style="flex:none">
     <div class="stat"><div class="v">11/11</div><div class="l">practice E01–E11 · hit rate 100%</div></div>
@@ -559,7 +603,7 @@
 
 <!-- ============ 12 · PRIVACY ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">13</span> · Privacy by design</div>
+  <div class="eyebrow"><span class="n">14</span> · Privacy by design</div>
   <h1>Bộ nhớ phải biết quên đúng cách</h1>
   <div class="body" style="justify-content:center">
     <figure>
@@ -597,7 +641,7 @@
 
 <!-- ============ 13 · CLOSING ============ -->
 <section class="slide">
-  <div class="eyebrow"><span class="n">14</span> · Kết luận &amp; demo</div>
+  <div class="eyebrow"><span class="n">15</span> · Kết luận &amp; demo</div>
   <h1>Năm điều mang về</h1>
   <div class="cols c2 body">
     <div class="card">
